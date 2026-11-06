@@ -1,0 +1,248 @@
+# Semáforo del Silencio — configuración única del subsistema de IA
+# Restricción 5 de la especificación: no debe haber valores fijos en el código.
+
+proyecto:
+  nombre: "Semaforo del Silencio"
+  version: "0.3.0-etapa3"
+  salon: "Prueba" # nombre del salón que se muestra en el tablero web
+
+# ---------------------------------------------------------------- AUDIO
+audio:
+  # De dónde sale el sonido en run_session.py:
+  #   esp32  -> el INMP441 del ESP32 mide los dB y los manda por el cable. El
+  #             micrófono de la laptop NO se abre. El semáforo decide por nivel
+  #             (umbral_amarillo / umbral_rojo, con confirmación e histéresis),
+  #             igual que el firmware. Sin audio en la laptop no corre YAMNet ni
+  #             el clasificador de 4 clases.
+  #   laptop -> el micrófono de la laptop: YAMNet + clasificador propio (regla
+  #             completa de la sección 7) o, si no hay modelo, nivel relativo
+  #             al fondo del aula (sin_modelo).
+  fuente: esp32
+  sample_rate: 16000 # YAMNet exige 16 kHz mono
+  canales: 1
+  # Índice del micrófono (ver: python -m src.audio.capture --listar). Los
+  # índices cambian según qué esté enchufado; también acepta parte del
+  # nombre, p. ej. "USB", que es más estable que un número.
+  dispositivo: 1
+  duracion_bloque_s: 1.0 # bloque de inferencia (sección 5.5)
+  solapamiento_s: 0.5 # solapamiento al cortar los fragmentos
+  ventana_moda: 5 # moda de las últimas N predicciones
+  clases: # sección 5.1 — clasificador propio
+    - silencio
+    - voz_docente
+    - murmullo
+    - ruido_brusco
+  yamnet:
+    handle: "https://tfhub.dev/google/yamnet/1"
+    top_n: 3 # cuántas clases de AudioSet mostrar en la demo
+  db:
+    referencia_rms: 1.0e-5 # referencia para convertir RMS a dB relativos
+    umbral_amarillo: 55.0
+    umbral_rojo: 65.0
+    # La voz del docente no sube el semáforo, salvo que pase de este nivel (grito).
+    voz_docente_max_db: 70.0
+    # Respaldo mientras no haya modelo de audio entrenado (models/audio_clf.pkl):
+    # se decide solo por nivel, relativo al ruido de fondo medido al empezar la
+    # sesión. Los dB del micrófono de la laptop son relativos (no SPL), por eso
+    # no sirven los umbrales fijos de arriba. En cuanto exista el modelo, se
+    # vuelve a la regla completa de la sección 7 sin tocar nada.
+    sin_modelo:
+      # El fondo es la mediana de los últimos segundos_ventana segundos: sigue al
+      # nivel habitual del aula y no lo mueven ni un ruido corto ni un bajón.
+      segundos_ventana: 60
+      segundos_base: 8 # mínimo de lecturas antes de decidir
+      suavizado_s: 3 # se compara el promedio de los últimos N segundos, no el crudo
+      amarillo_sobre_base: 8.0 # dB por encima del fondo para AMARILLO
+      rojo_sobre_base: 15.0 # dB por encima del fondo para ROJO
+      margen_bajada: 2.0 # para bajar de estado hay que caer este margen por debajo del umbral
+  entrenamiento:
+    n_arboles: 400
+    semilla: 42
+    sesiones_prueba: 1 # sesiones completas reservadas para prueba
+    sesiones_validacion: 1 # sesiones completas reservadas para validación
+    exactitud_balanceada_minima: 0.75 # criterio de aceptación, sección 10
+    confusion_max_docente_murmullo: 0.20
+
+# ---------------------------------------------------------------- GRABACIÓN
+grabacion:
+  # --- record_session.py (grabar material para entrenar)
+  duracion_min: 10 # duración por defecto de una sesión de grabación
+  video_fps: 15
+  guardar_video: true
+  # --- run_session.py. Autorizado: los padres están informados. Cada sesión
+  # tiene su carpeta, sesiones/<fecha>_sesion_<n>/ (ej. sesiones/2026-11-02_sesion_01/),
+  # con el reporte, los CSV, las fotos, el video y el audio.
+  video: true # video.mp4 de la cámara (solo cámara en vivo), ~3-5 MB por minuto (una clase de 45 min ≈ 150-220 MB)
+  audio: true # audio.wav del micrófono del aula, ~1.9 MB por minuto
+  fotos:
+    habilitado: true
+    al_evento: true # movimiento anómalo confirmado y persona dormida
+    al_cambio_estado: true # cada vez que el semáforo cambia de color
+    difuminar_caras: false # true para pixelar las caras (src/vision/evidencias.py)
+    max_por_sesion: 500
+
+# ---------------------------------------------------------------- VISIÓN
+vision:
+  camara_index: 1 # cámara externa (ver cuál es con: python -m src.vision.pose --camara N)
+  ancho: 640
+  alto: 480
+  fps_objetivo: 15
+  modelo_pose: "yolov8n-pose.pt" # preentrenado, no se reentrena
+  conf_minima: 0.35
+  conf_keypoint: 0.5
+  frames_evento: 30 # ventana de 2 s
+  # Personas dormidas (src/vision/sleep.py): cabeza a la altura de los hombros
+  # o más abajo + muñecas quietas, sostenido. No cambia el color del semáforo:
+  # se cuenta en pantalla y se registra como evento "persona_dormida".
+  dormido:
+    habilitado: true
+    umbral_cabeza: 0.05 # (y_hombros - y_cabeza) / torso; erguido ~0.3-0.6, apoyado <= 0
+    max_velocidad_munecas: 0.25 # alturas de recuadro por segundo
+    segundos_minimos: 20 # cuánto tiempo seguido para darlo por dormido
+    tolerancia_s: 3 # suavizado: hace falta cabeza baja la mayoría de los últimos ~3 s
+  # Ojos cerrados (src/vision/ojos.py): RandomForest entrenado con CEW sobre el
+  # recorte de cada ojo. Solo decide si la cara se ve lo bastante grande.
+  ojos:
+    habilitado: true
+    min_px_entre_ojos: 20 # menos que esto (alumnos del fondo) = "sin dato"
+    umbral_cerrado: 0.5 # probabilidad a partir de la cual se considera cerrado
+  confirmaciones_evento: 3 # sección 6.4: ventanas anómalas seguidas para confirmar un evento (con 2, el video normal da falsa alarma)
+  clases_postura:
+    - sentado
+    - de_pie
+  clases_evento:
+    - normal
+    - movimiento_anomalo
+  postura:
+    # Umbral sobre la desviación respecto de la línea base, normalizado por la
+    # altura del recuadro. Se usa cuando existe models/baseline_calib.json.
+    umbral_de_pie: 0.18
+    # Sin calibración se decide por geometría de la propia persona: ángulo de
+    # rodilla si las piernas se ven, y si no, proporción alto/ancho del recuadro
+    # (sentado ≈ 1.0, de pie ≈ 2.0; medido en los videos del proyecto).
+    aspecto_de_pie: 1.7
+    angulo_rodilla_de_pie: 130
+  # Detecciones que se descartan antes de medir nada: recuadros muy pequeños
+  # respecto del cuadro (fotos en la pared, reflejos) y personas cuyos keypoints
+  # tienen poca confianza media. Sin esto, la cámara contaba 3-4 "personas" en
+  # un escritorio con una sola.
+  filtro_personas:
+    min_alto_fraccion: 0.10 # alto del recuadro / alto del cuadro (en un aula la gente ocupa 15-35 %)
+    min_conf_media: 0.20 # confianza media de los 17 keypoints (en un aula hay oclusión; 0.30 borraba gente real)
+  evento:
+    # La decisión de evento se toma por VENTANA de tiempo, no por cuadro
+    # (sección 6.1: la unidad de decisión es una secuencia de ~2 s). Cada
+    # ventana produce media, máximo y desviación estándar de cada rasgo, y
+    # sobre eso decide el clasificador. Un evento se registra solo tras
+    # `confirmaciones_evento` ventanas anómalas seguidas.
+    ventana_s: 2.0
+    paso_ventana_s: 1.0 # cada cuánto se evalúa una nueva ventana
+    # Velocidad de las muñecas, en alturas de recuadro POR SEGUNDO. Se expresa
+    # por segundo y no por cuadro para que no dependa de los FPS de la cámara.
+    umbral_velocidad_muneca_por_s: 1.5 # un cuadro "rápido" supera esto (calibrado con pelea.mp4 y persona_corriendo.mp4)
+    # Por encima de esto ya no es un cuerpo sino un salto del detector; se ignora.
+    max_velocidad_fisica_por_s: 8.0
+    # Regla provisional mientras no exista models/vision_evento_clf.pkl. Ambas
+    # condiciones deben cumplirse a la vez dentro de la ventana.
+    regla:
+      velocidad_media_por_s: 0.5 # velocidad media de toda la ventana (con 0.4 hay 1 falso positivo en normal_aula_01)
+      fraccion_cuadros_rapidos: 0.08 # medido con KTH: 0.05 daba 38 % de falsas alarmas al caminar; 0.08 da 17 % sin perder carreras
+    # Segundos que deben pasar antes de admitir otro evento del mismo tipo, para
+    # que un mismo disturbio no genere decenas de entradas en el reporte.
+    espera_entre_eventos_s: 8.0
+  calibracion:
+    duracion_s: 120 # 2 minutos con todos sentados
+    min_muestras: 60
+  zonas: # rectángulos en coordenadas normalizadas 0-1
+    docente: [0.0, 0.0, 1.0, 0.30] # x1, y1, x2, y2
+    alumnos: [0.0, 0.30, 1.0, 1.0]
+
+# ---------------------------------------------------------------- FUSIÓN
+fusion:
+  # Un estado debe sostenerse este número de ciclos antes de cambiar, para que
+  # una predicción aislada no haga parpadear el semáforo.
+  confirmaciones_estado: 2
+  intervalo_resumen_min: 5 # promedio de personas de pie por intervalo
+  # DESVIACIÓN de la sección 7. En la especificación el color del semáforo
+  # depende solo del audio y un movimiento anómalo únicamente se registra como
+  # evento. Mientras el clasificador de audio no esté entrenado, el color no
+  # cambiaría nunca; con esto activado, un movimiento anómalo confirmado pone el
+  # semáforo en AMARILLO. Ponerlo en false para volver a la regla original.
+  evento_visual_cambia_estado: true
+
+# ---------------------------------------------------------------- ESP32
+esp32:
+  habilitado: true
+  # Por dónde habla la laptop con el ESP32:
+  #   usb  -> por el cable (recomendado): no hay que configurar redes ni IPs.
+  #           En el firmware, MODO_WIFI false en config.h.
+  #   wifi -> por la red: el ESP32 se anuncia por UDP y la laptop lo descubre.
+  #           Para probar sin hardware: scripts/simular_esp32.py con ip 127.0.0.1 y puerto 8081.
+  transporte: usb
+  puerto_serie: auto # "auto" busca el chip del ESP32; o fijo, p. ej. "COM3"
+  baudios: 921600 # igual que BAUDIOS_SERIE en firmware/semaforo_esp32/config.h
+  # Con audio.fuente: esp32, el ESP32 manda también el audio del INMP441 por el
+  # cable y la laptop corre YAMNet + el clasificador sobre el sonido del aula.
+  audio_por_usb: true
+  # Solo para transporte wifi. La ip es un respaldo: si el ESP32 se anuncia por
+  # la red, la laptop usa la IP descubierta (data/esp32_descubierto.json).
+  ip: "192.168.18.205"
+  puerto: 80
+  ruta_estado: "/estado" # laptop -> ESP32: color del semáforo
+  ruta_servo: "/servo" # laptop -> ESP32: orden de girar la cámara
+  timeout_s: 2.0
+  min_intervalo_envio_s: 1.0
+  # El estado se repite cada tanto aunque no cambie. El ESP32 lo mantiene de
+  # todos modos hasta la siguiente orden; el refresco solo sirve para que, si
+  # el ESP32 se reinicia a mitad de sesión, recupere el color en segundos.
+  reenviar_estado_s: 3.0
+
+# ---------------------------------------------------------------- SERVO
+# La cámara gira entre posiciones fijas y se queda quieta en cada una. La
+# laptop ordena el giro (nunca a mitad de un evento) y pausa el análisis
+# mientras la cámara se mueve, porque durante el giro todo lo que se ve se
+# desplaza y parecería que todas las personas se mueven a la vez.
+servo:
+  habilitado: true
+  posiciones: 3 # izquierda, centro, derecha (ANGULOS_SERVO en config.h); recorrido 0-1-2-1-0
+  permanencia_s: 30 # cuánto se queda analizando en cada una
+  tiempo_giro_s: 2.5 # pausa del análisis: giro suave (60° en 1,5 s) + asentamiento
+  # Zonas por posición (opcional). Si una posición no aparece, usa vision.zonas.
+  # La calibración de línea base también es por posición:
+  # models/baseline_calib.json para la 0, models/baseline_calib_p1.json para la 1, etc.
+  zonas_por_posicion: {}
+
+# ---------------------------------------------------------------- TABLERO WEB
+dashboard:
+  puerto: 8000
+  # 127.0.0.1 = solo esta laptop. Para que el ESP32 llegue por Wi-Fi tiene que
+  # ser 0.0.0.0 (todas las interfaces). El servidor solo acepta la red local.
+  escuchar_en: "0.0.0.0"
+  # UDP por el que el ESP32 se anuncia y la laptop le responde (mismo valor que
+  # PUERTO_DESCUBRIMIENTO en el firmware). Así ninguno necesita la IP del otro.
+  puerto_descubrimiento: 8765
+  refresco_s: 10 # cada cuánto el navegador vuelve a pedir los datos
+  # Cada cuántos segundos run_session.py vuelca la sesión en curso a
+  # sesiones/, para que el tablero la muestre sin esperar a que termine.
+  publicar_cada_s: 5
+
+# ---------------------------------------------------------------- RUTAS
+rutas:
+  data_audio_raw: "data/audio/raw"
+  data_audio_clips: "data/audio/clips"
+  data_audio_labels: "data/audio/labels.csv"
+  data_video_raw: "data/video/raw"
+  data_video_clips: "data/video/clips"
+  data_video_labels: "data/video/labels.csv"
+  embeddings_audio: "data/audio/embeddings.npz"
+  ventanas_video: "data/video/ventanas.npz"
+  modelo_audio: "models/audio_clf.pkl"
+  modelo_postura: "models/vision_postura_clf.pkl"
+  modelo_evento: "models/vision_evento_clf.pkl"
+  calibracion: "models/baseline_calib.json"
+  modelo_ojos: "models/ojos_clf.pkl"
+  sesiones: "sesiones" # una carpeta por sesión con todos sus datos
+  cache_tfhub: "models/tfhub" # YAMNet descargado; fuera de Temp para que Windows no lo borre
+  reports: "reports"
+  web: "web"
+  base_datos: "data/semaforo.db"

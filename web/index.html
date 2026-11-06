@@ -1,0 +1,636 @@
+<title>Semáforo del Silencio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root{
+    --fondo:#eff1f4;
+    --panel:#ffffff;
+    --panel-2:#f7f8fa;
+    --borde:#dce0e6;
+    --tinta:#0e1116;
+    --tinta-2:#4c545e;
+    --tinta-3:#79828d;
+    --marca:#123243;
+
+    --verde:#15794a;
+    --verde-suave:#dcf0e5;
+    --ambar:#a86a05;
+    --ambar-suave:#fbeed2;
+    --rojo:#b3271b;
+    --rojo-suave:#fbe1de;
+
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  }
+
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --fondo:#0f1216;
+      --panel:#171b21;
+      --panel-2:#1e232a;
+      --borde:#2b323b;
+      --tinta:#e9ecf0;
+      --tinta-2:#a8b1bb;
+      --tinta-3:#78828d;
+      --marca:#8fc4dc;
+
+      --verde:#4ad98d;
+      --verde-suave:#12301f;
+      --ambar:#f0b849;
+      --ambar-suave:#33260c;
+      --rojo:#ff6d5e;
+      --rojo-suave:#3a1512;
+    }
+  }
+  :root[data-theme="dark"]{
+    --fondo:#0f1216;
+    --panel:#171b21;
+    --panel-2:#1e232a;
+    --borde:#2b323b;
+    --tinta:#e9ecf0;
+    --tinta-2:#a8b1bb;
+    --tinta-3:#78828d;
+    --marca:#8fc4dc;
+
+    --verde:#4ad98d;
+    --verde-suave:#12301f;
+    --ambar:#f0b849;
+    --ambar-suave:#33260c;
+    --rojo:#ff6d5e;
+    --rojo-suave:#3a1512;
+  }
+
+  body{
+    background:var(--fondo);
+    color:var(--tinta);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    margin:0;
+    padding:24px 20px 64px;
+  }
+  .envoltura{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+  /* ---------------- encabezado ---------------- */
+  .cabecera{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+  .titulo h1{
+    font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0;
+  }
+  .titulo .eyebrow{
+    font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;
+    color:var(--marca);margin:0 0 4px;
+  }
+  .controles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  label.campo{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--tinta-3);
+    font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  select{
+    font-family:var(--sans);font-size:14px;color:var(--tinta);background:var(--panel);
+    border:1px solid var(--borde);border-radius:6px;padding:7px 10px;min-width:190px;
+  }
+  select:focus-visible{outline:2px solid var(--marca);outline-offset:1px}
+
+  /* ---------------- semáforo grande ---------------- */
+  .semaforo{
+    border:1px solid var(--borde);border-radius:12px;overflow:hidden;background:var(--panel);
+  }
+  .semaforo .cuerpo{
+    display:flex;flex-wrap:wrap;align-items:center;gap:28px;padding:26px 30px;
+  }
+  .luces{display:flex;gap:14px;flex:none}
+  .luz{
+    width:46px;height:46px;border-radius:50%;border:2px solid var(--borde);
+    background:var(--panel-2);
+  }
+  .luz.on-verde{background:var(--verde);border-color:var(--verde)}
+  .luz.on-ambar{background:var(--ambar);border-color:var(--ambar)}
+  .luz.on-rojo{background:var(--rojo);border-color:var(--rojo)}
+
+  .estado-texto{flex:1;min-width:240px}
+  .estado-texto .valor{
+    font-size:clamp(44px,8vw,76px);font-weight:700;line-height:1;letter-spacing:-.03em;
+    margin:0;
+  }
+  .estado-texto .glosa{margin:8px 0 0;color:var(--tinta-2);font-size:15px;max-width:52ch}
+  .estado-texto .rotulo{margin:0 0 6px;font-size:11px;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--tinta-3)}
+  .v-verde{color:var(--verde)}
+  .v-ambar{color:var(--ambar)}
+  .v-rojo{color:var(--rojo)}
+
+  .franja{height:8px}
+  .f-verde{background:var(--verde)}
+  .f-ambar{background:var(--ambar)}
+  .f-rojo{background:var(--rojo)}
+
+  /* ---------------- rejilla de paneles ---------------- */
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+  .panel{
+    background:var(--panel);border:1px solid var(--borde);border-radius:12px;
+    padding:20px 22px;display:flex;flex-direction:column;gap:14px;
+  }
+  .panel h2{
+    font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--tinta-3);margin:0;padding-bottom:10px;border-bottom:1px solid var(--borde);
+  }
+
+  .cifras{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:14px}
+  .cifra .n{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;
+    line-height:1.1;display:block}
+  .cifra .et{font-size:11.5px;color:var(--tinta-3);letter-spacing:.03em}
+
+  /* barras de distribución */
+  .barras{display:flex;flex-direction:column;gap:9px}
+  .barra{display:grid;grid-template-columns:104px 1fr 52px;align-items:center;gap:10px;font-size:13px}
+  .barra .pista{height:9px;border-radius:5px;background:var(--panel-2);overflow:hidden}
+  .barra .relleno{height:100%;border-radius:5px;background:var(--marca)}
+  .barra .pct{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--tinta-2);
+    font-variant-numeric:tabular-nums}
+  .barra .nom{color:var(--tinta-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-silencio .relleno{background:var(--tinta-3)}
+  .c-voz_docente .relleno{background:var(--verde)}
+  .c-murmullo .relleno{background:var(--ambar)}
+  .c-ruido_brusco .relleno{background:var(--rojo)}
+  .c-VERDE .relleno{background:var(--verde)}
+  .c-AMARILLO .relleno{background:var(--ambar)}
+  .c-ROJO .relleno{background:var(--rojo)}
+
+  /* línea de tiempo */
+  .franja-tiempo{display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--borde)}
+  .franja-tiempo span{flex:1 1 0}
+  .leyenda{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--tinta-2)}
+  .leyenda i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;
+    vertical-align:-1px}
+
+  svg.grafico{width:100%;height:130px;display:block;overflow:visible}
+
+  /* tablas */
+  .tabla-scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th{text-align:left;font-weight:600;color:var(--tinta-3);font-size:11px;letter-spacing:.07em;
+    text-transform:uppercase;padding:0 12px 8px 0;border-bottom:1px solid var(--borde);white-space:nowrap}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--borde);color:var(--tinta-2);vertical-align:top}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--tinta);white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+
+  .pastilla{
+    display:inline-block;font-size:11px;font-weight:600;letter-spacing:.05em;
+    padding:2px 9px;border-radius:20px;white-space:nowrap;
+  }
+  .p-VERDE{background:var(--verde-suave);color:var(--verde)}
+  .p-AMARILLO{background:var(--ambar-suave);color:var(--ambar)}
+  .p-ROJO{background:var(--rojo-suave);color:var(--rojo)}
+
+  .aviso{
+    background:var(--panel-2);border:1px solid var(--borde);border-left:3px solid var(--ambar);
+    border-radius:8px;padding:12px 16px;font-size:13.5px;color:var(--tinta-2);
+  }
+  .vacio{color:var(--tinta-3);font-size:14px;margin:0}
+  .detalles{color:var(--tinta-3);font-size:12.5px}
+  .detalles summary{cursor:pointer;user-select:none}
+  .detalles ul{margin:6px 0 0;padding-left:20px}
+  .panel.esp32{flex-direction:row;flex-wrap:wrap;align-items:center;gap:18px 32px;padding:16px 22px}
+  .esp32 .led{width:18px;height:18px;border-radius:50%;display:inline-block;vertical-align:-3px;margin-right:8px;
+    border:2px solid var(--borde);background:var(--panel-2)}
+  .esp32 .led.VERDE{background:var(--verde);border-color:var(--verde)}
+  .esp32 .led.AMARILLO{background:var(--ambar);border-color:var(--ambar)}
+  .esp32 .led.ROJO{background:var(--rojo);border-color:var(--rojo)}
+  .esp32 .dato{font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+  .esp32 .et{font-size:11px;color:var(--tinta-3);letter-spacing:.06em;text-transform:uppercase;display:block}
+  .esp32 .viejo{color:var(--rojo)}
+  .esp32 svg{width:220px;height:44px;display:block}
+  .pie{color:var(--tinta-3);font-size:12px;text-align:center;margin:8px 0 0}
+
+  @media (max-width:560px){
+    body{padding:16px 12px 48px}
+    .panel{padding:16px}
+    .barra{grid-template-columns:88px 1fr 46px}
+  }
+</style>
+
+<div class="envoltura">
+
+  <header class="cabecera">
+    <div class="titulo">
+      <p class="eyebrow">Semáforo del Silencio · UTEC</p>
+      <h1 id="titulo-salon">Reportes de sesión</h1>
+    </div>
+    <div class="controles">
+      <label class="campo" id="campo-salon" hidden>Salón
+        <select id="sel-salon"></select>
+      </label>
+      <label class="campo">Sesión
+        <select id="sel-sesion"></select>
+      </label>
+    </div>
+  </header>
+
+  <div id="esp32"></div>
+
+  <div id="contenido"></div>
+
+  <p class="pie" id="pie"></p>
+</div>
+
+<script>
+const ESTADOS = ["VERDE", "AMARILLO", "ROJO"];
+const GLOSA = {
+  VERDE:    "El aula está en condiciones adecuadas. Si el docente está hablando, el nivel alto de sonido no cuenta como ruido disruptivo.",
+  AMARILLO: "Murmullo por encima del umbral de atención: varias voces a la vez sin una dominante.",
+  ROJO:     "Murmullo sostenido por encima del umbral alto. El aula requiere intervención.",
+};
+const GLOSA_VISUAL = {
+  AMARILLO: "La cámara confirmó un movimiento anómalo sostenido (varias ventanas seguidas). El audio no intervino en este cambio.",
+  ROJO:     "Movimiento anómalo confirmado por la cámara.",
+};
+
+/* Qué provocó el estado final: el último cambio registrado lo dice. Si el
+   reporte es antiguo y no trae `motivo`, se infiere: sin audio y con eventos de
+   movimiento, fue la cámara. */
+function causaEstado(r) {
+  const cambios = r.cambios_estado || [];
+  const ultimo = cambios[cambios.length - 1];
+  if (ultimo && ultimo.a === r.estado_final && ultimo.motivo) return ultimo.motivo;
+  const sinAudio = !r.audio || !Object.keys(r.audio.distribucion_clases || {}).length;
+  const conMov = ((r.eventos || {}).por_tipo_y_zona || {}).movimiento_anomalo;
+  if (r.estado_final !== "VERDE" && sinAudio && conMov) return "evento_visual";
+  return "audio";
+}
+
+const GLOSA_NIVEL = {
+  AMARILLO: "El ruido del aula subió por encima de lo normal.",
+  ROJO: "El ruido del aula está muy por encima de lo normal.",
+};
+function glosaDe(r) {
+  if (r.estado_final === "VERDE") return GLOSA.VERDE;
+  const causa = causaEstado(r);
+  if (causa === "evento_visual") return GLOSA_VISUAL[r.estado_final] || GLOSA[r.estado_final];
+  if (causa === "nivel_db") return GLOSA_NIVEL[r.estado_final] || GLOSA[r.estado_final];
+  return GLOSA[r.estado_final];
+}
+const CLASE_LEGIBLE = {
+  silencio: "Silencio", voz_docente: "Voz del docente",
+  murmullo: "Murmullo", ruido_brusco: "Ruido brusco",
+};
+
+let REPORTES = [];
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const min = (s) => (s / 60).toFixed(1);
+
+function reloj(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d) ? iso : d.toLocaleString("es-PE", {
+    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+/* ------------------------------------------------------------------ carga */
+async function cargar() {
+  if (window.DATOS_EMBEBIDOS) return window.DATOS_EMBEBIDOS.reportes || [];
+  try {
+    const r = await fetch("api/reportes", { cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return (await r.json()).reportes || [];
+  } catch (e) {
+    console.warn("No se pudieron cargar los reportes:", e);
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------- fragmentos */
+function barras(dist, prefijo) {
+  const filas = Object.entries(dist || {});
+  if (!filas.length) return `<p class="vacio">Sin datos.</p>`;
+  const tope = Math.max(...filas.map(([, v]) => v), 1);
+  return `<div class="barras">` + filas.map(([k, v]) => `
+    <div class="barra c-${esc(k)}">
+      <span class="nom">${esc(CLASE_LEGIBLE[k] || k)}</span>
+      <span class="pista"><span class="relleno" style="width:${(v / tope) * 100}%"></span></span>
+      <span class="pct">${v.toFixed(1)}%</span>
+    </div>`).join("") + `</div>`;
+}
+
+function lineaTiempo(serie) {
+  if (!serie || !serie.length) return "";
+  const celdas = serie.map((p) =>
+    `<span class="f-${p.estado === "VERDE" ? "verde" : p.estado === "AMARILLO" ? "ambar" : "rojo"}"
+           title="${min(p.segundo)} min · ${esc(p.estado)} · ${p.nivel_db} dB"></span>`).join("");
+  return `
+    <div class="franja-tiempo">${celdas}</div>
+    <div class="leyenda">
+      <span><i class="f-verde"></i>Verde</span>
+      <span><i class="f-ambar"></i>Ámbar</span>
+      <span><i class="f-rojo"></i>Rojo</span>
+      <span style="margin-left:auto">0 → ${min(serie[serie.length - 1].segundo)} min</span>
+    </div>`;
+}
+
+function grafico(serie, campo, color) {
+  const puntos = (serie || []).filter((p) => p[campo] !== null && p[campo] !== undefined);
+  if (puntos.length < 2) return `<p class="vacio">Sin datos suficientes para graficar.</p>`;
+
+  const W = 600, H = 120, P = 6;
+  const xs = puntos.map((p) => p.segundo);
+  const ys = puntos.map((p) => p[campo]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const px = (x) => P + ((x - x0) / (x1 - x0 || 1)) * (W - 2 * P);
+  const py = (y) => H - P - ((y - y0) / (y1 - y0 || 1)) * (H - 2 * P);
+
+  const d = puntos.map((p, i) => `${i ? "L" : "M"}${px(p.segundo).toFixed(1)},${py(p[campo]).toFixed(1)}`).join(" ");
+  const area = `${d} L${px(x1).toFixed(1)},${H - P} L${px(x0).toFixed(1)},${H - P} Z`;
+  const ult = puntos[puntos.length - 1];
+
+  return `
+    <svg class="grafico" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+         aria-label="Evolución de ${esc(campo)}">
+      <path d="${area}" fill="${color}" opacity="0.13"></path>
+      <path d="${d}" fill="none" stroke="${color}" stroke-width="1.8"
+            stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+      <circle cx="${px(ult.segundo).toFixed(1)}" cy="${py(ult[campo]).toFixed(1)}" r="3" fill="${color}"></circle>
+    </svg>
+    <div class="leyenda"><span>mín ${y0.toFixed(1)}</span><span>máx ${y1.toFixed(1)}</span>
+      <span style="margin-left:auto">último ${Number(ult[campo]).toFixed(1)}</span></div>`;
+}
+
+// Foto de evidencia (sesiones/<id>/fotos/, servida por serve_dashboard.py).
+function miniatura(ruta) {
+  if (!ruta) return "—";
+  const url = "/" + String(ruta).split("/").map(encodeURIComponent).join("/");
+  return `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="foto" loading="lazy"
+    style="height:44px;border-radius:4px;border:1px solid var(--borde, #ccd);vertical-align:middle"></a>`;
+}
+
+function tablaEventos(ev) {
+  const filas = (ev.detalle || []).slice().reverse();
+  if (!filas.length) return `<p class="vacio">Ningún evento registrado en esta sesión.</p>`;
+  return `<div class="tabla-scroll"><table>
+    <thead><tr><th>Minuto</th><th>Tipo</th><th>Zona</th><th>Foto</th></tr></thead>
+    <tbody>${filas.map((e) => `
+      <tr><td class="n">${min(e.segundo)}</td>
+          <td>${esc((e.tipo || "").replace(/_/g, " "))}</td>
+          <td>${esc(e.zona || "—")}</td>
+          <td>${miniatura(e.foto)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+const MOTIVO_LEGIBLE = {
+  audio: "audio (murmullo sobre el umbral)",
+  nivel_db: "ruido (nivel sobre el fondo del aula)",
+  evento_visual: "cámara (movimiento anómalo)",
+  normalizado: "volvió a la normalidad",
+};
+
+function tablaCambios(r) {
+  const cambios = (r.cambios_estado || []).slice().reverse();
+  if (!cambios.length) return `<p class="vacio">Sin cambios de estado todavía: el aula se mantuvo en ${esc(r.estado_final)}.</p>`;
+  return `<div class="tabla-scroll"><table>
+    <thead><tr><th>Hora</th><th>Cambio</th><th>Causa</th><th>dB</th><th>Foto</th></tr></thead>
+    <tbody>${cambios.map((c) => `
+      <tr><td class="n">${esc(reloj(c.timestamp).split(", ")[1] || reloj(c.timestamp))}</td>
+          <td><span class="pastilla p-${esc(c.de)}">${esc(c.de)}</span> → <span class="pastilla p-${esc(c.a)}">${esc(c.a)}</span></td>
+          <td>${esc(MOTIVO_LEGIBLE[c.motivo] || c.motivo || "—")}</td>
+          <td class="n">${c.nivel_db ?? "—"}</td>
+          <td>${miniatura(c.foto)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+function tablaSesiones(lista, actual) {
+  return `<div class="tabla-scroll"><table>
+    <thead><tr><th>Sesión</th><th>Inicio</th><th>Duración</th><th>Ámbar</th><th>Rojo</th>
+      <th>Cambios</th><th>Eventos</th><th>Personas</th><th>De pie</th></tr></thead>
+    <tbody>${lista.map((r) => `
+      <tr style="${r.sesion_id === actual ? "background:var(--panel-2)" : ""}">
+        <td class="n">${esc(r.sesion_id)}</td>
+        <td>${esc(reloj(r.inicio))}</td>
+        <td class="n">${min(r.duracion_s)} min</td>
+        <td class="n">${r.porcentaje_estados?.AMARILLO ?? 0}%</td>
+        <td class="n">${r.porcentaje_estados?.ROJO ?? 0}%</td>
+        <td class="n">${(r.cambios_estado || []).length}</td>
+        <td class="n">${r.eventos?.total ?? 0}</td>
+        <td class="n">${r.camara?.personas_promedio ?? "—"}</td>
+        <td class="n">${r.camara?.de_pie_promedio ?? "—"}</td>
+      </tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+/* --------------------------------------------------------------- render */
+function pintar(r, deSalon) {
+  const clase = r.estado_final === "VERDE" ? "verde" : r.estado_final === "AMARILLO" ? "ambar" : "rojo";
+  const cam = r.camara || {}, aud = r.audio || {}, ev = r.eventos || {};
+  const dePie = cam.de_pie_promedio;
+  const ultimo = (r.serie || [])[(r.serie || []).length - 1] || {};
+
+  const avisos = [];
+  if (r.en_curso)
+    avisos.push("Sesión en curso: se actualiza sola cada pocos segundos.");
+  if (r.simulada)
+    avisos.push("Sesión simulada: datos generados, no mediciones reales.");
+
+  // Notas técnicas: van en una sola línea discreta, no como avisos.
+  const notas = [];
+  if (r.fuente && r.fuente.startsWith("video:")) notas.push(`analizada desde ${r.fuente.slice(7)}`);
+  if (r.audio_disponible === false) notas.push("sin audio");
+  else if (r.modelo_audio_entrenado === false) notas.push("audio sin clasificar (modelo no entrenado)");
+  if (r.metodo_postura === "geometria") notas.push("de pie por geometría");
+  if (r.modelo_evento_entrenado === false) notas.push("eventos por regla provisional");
+
+  $("contenido").innerHTML = `
+    <section class="semaforo">
+      <div class="franja f-${clase}"></div>
+      <div class="cuerpo">
+        <div class="luces">
+          <span class="luz ${r.estado_final === "VERDE" ? "on-verde" : ""}"></span>
+          <span class="luz ${r.estado_final === "AMARILLO" ? "on-ambar" : ""}"></span>
+          <span class="luz ${r.estado_final === "ROJO" ? "on-rojo" : ""}"></span>
+        </div>
+        <div class="estado-texto">
+          <p class="rotulo">${r.en_curso
+            ? "Estado actual · sesión en curso"
+            : `Estado final · sesión terminada ${esc(reloj(r.fin))}`}</p>
+          <p class="valor v-${clase}">${esc(r.estado_final)}</p>
+          <p class="glosa">${esc(glosaDe(r))}</p>
+        </div>
+      </div>
+    </section>
+
+    ${avisos.map((a) => `<div class="aviso">${esc(a)}</div>`).join("")}
+
+    <div class="rejilla">
+      <section class="panel">
+        <h2>Resumen de la sesión</h2>
+        <div class="cifras">
+          <div class="cifra"><span class="n">${min(r.duracion_s)}</span><span class="et">minutos</span></div>
+          <div class="cifra"><span class="n">${aud.n_lecturas ?? 0}</span><span class="et">lecturas</span></div>
+          <div class="cifra"><span class="n">${ev.total ?? 0}</span><span class="et">eventos</span></div>
+          <div class="cifra"><span class="n">${(r.cambios_estado || []).length}</span><span class="et">cambios de estado</span></div>
+        </div>
+        <h2 style="margin-top:4px">Tiempo en cada estado</h2>
+        ${barras(r.porcentaje_estados, "e")}
+        ${lineaTiempo(r.serie)}
+      </section>
+
+      <section class="panel">
+        <h2>Reporte de audio</h2>
+        <div class="cifras">
+          <div class="cifra"><span class="n">${aud.nivel_db_promedio ?? 0}</span><span class="et">dB promedio</span></div>
+          <div class="cifra"><span class="n">${aud.nivel_db_maximo ?? 0}</span><span class="et">dB máximo</span></div>
+        </div>
+        ${barras(aud.distribucion_clases, "a")}
+        ${grafico(r.serie, "nivel_db", "var(--marca)")}
+      </section>
+
+      <section class="panel">
+        <h2>Reporte de cámara</h2>
+        <div class="cifras">
+          <div class="cifra"><span class="n">${ultimo.n_personas ?? "—"}</span><span class="et">personas ahora</span></div>
+          <div class="cifra"><span class="n">${ultimo.n_de_pie ?? "—"}</span><span class="et">de pie ahora</span></div>
+          <div class="cifra"><span class="n">${dePie ?? "n/d"}</span><span class="et">de pie promedio${r.en_curso ? " hasta ahora" : ""}</span></div>
+          <div class="cifra"><span class="n">${cam.de_pie_maximo ?? "n/d"}</span><span class="et">de pie máximo</span></div>
+          <div class="cifra"><span class="n">${cam.personas_promedio ?? 0}</span><span class="et">personas promedio</span></div>
+          <div class="cifra"><span class="n">${cam.personas_maximo ?? 0}</span><span class="et">personas máximo</span></div>
+          <div class="cifra"><span class="n">${cam.dormidos_maximo ?? "n/d"}</span><span class="et">dormidos máximo</span></div>
+        </div>
+        ${grafico(r.serie, "n_de_pie", "var(--ambar)")}
+      </section>
+
+      <section class="panel">
+        <h2>Registro de estados</h2>
+        ${tablaCambios(r)}
+      </section>
+
+      <section class="panel">
+        <h2>Eventos registrados</h2>
+        ${tablaEventos(ev)}
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>Historial de sesiones</h2>
+      ${tablaSesiones(deSalon, r.sesion_id)}
+    </section>
+
+    ${notas.length ? `<details class="detalles"><summary>Detalles técnicos de esta sesión</summary>
+      <ul>${notas.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}`;
+
+  $("pie").textContent = `Sesión ${r.sesion_id} · ${reloj(r.inicio)} → ${reloj(r.fin)}`
+    + (r.carpeta ? ` · datos en la carpeta ${r.carpeta}` : "");
+}
+
+function refrescarSesiones() {
+  const salon = $("sel-salon").value;
+  const deSalon = REPORTES.filter((r) => r.salon === salon);
+  $("sel-sesion").innerHTML = deSalon
+    .map((r) => `<option value="${esc(r.sesion_id)}">${esc(reloj(r.inicio))} · ${esc(r.estado_final)}</option>`)
+    .join("");
+  const actual = deSalon[0];
+  if (actual) pintar(actual, deSalon);
+}
+
+function iniciar(reportes) {
+  if (reportes === null) {
+    $("contenido").innerHTML = `<div class="aviso">
+      No se pudo contactar al servidor de reportes. Arráncalo con
+      <code>python scripts/serve_dashboard.py</code> y abre la página desde ahí.</div>`;
+    return;
+  }
+  if (!reportes.length) {
+    $("contenido").innerHTML = `<div class="aviso">
+      Todavía no hay sesiones. Inicia una en vivo con
+      <code>python scripts\run_session.py --minutos 5</code> y aparecerá aquí sola.</div>`;
+    return;
+  }
+
+  REPORTES = reportes;
+  const salones = [...new Set(reportes.map((r) => r.salon))];
+  $("sel-salon").innerHTML = salones.map((s) => `<option>${esc(s)}</option>`).join("");
+  // Con un solo salón no hace falta elegirlo: va en el título.
+  $("campo-salon").hidden = salones.length < 2;
+  $("titulo-salon").textContent = salones.length === 1 ? `Salón ${salones[0]}` : "Reportes de sesión por salón";
+  $("sel-salon").onchange = refrescarSesiones;
+  $("sel-sesion").onchange = () => {
+    const salon = $("sel-salon").value;
+    const deSalon = REPORTES.filter((r) => r.salon === salon);
+    const r = deSalon.find((x) => x.sesion_id === $("sel-sesion").value);
+    if (r) pintar(r, deSalon);
+  };
+  refrescarSesiones();
+}
+
+cargar().then(iniciar);
+
+/* ------------------------------------------------------- lectura del ESP32 */
+async function pintarEsp32() {
+  const caja = $("esp32");
+  if (window.DATOS_EMBEBIDOS) { caja.hidden = true; return; }
+  let ultima = null, serie = [];
+  try {
+    const a = await fetch("api/esp32/ultima", { cache: "no-store" });
+    ultima = (await a.json()).lectura;
+    const b = await fetch("api/esp32/lecturas?n=120", { cache: "no-store" });
+    serie = (await b.json()).lecturas || [];
+  } catch (e) { caja.hidden = true; return; }
+
+  if (!ultima) { caja.hidden = true; return; }
+
+  const hace = Math.round((Date.now() - new Date(ultima.recibido).getTime()) / 1000);
+  const viejo = hace > 15;
+  const ys = serie.map((l) => l.nivel_db).filter((v) => v !== null);
+  let grafico = "";
+  if (ys.length > 2) {
+    const W = 220, H = 44, y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const px = (i) => (i / (ys.length - 1)) * W, py = (v) => H - 2 - ((v - y0) / (y1 - y0 || 1)) * (H - 4);
+    const d = ys.map((v, i) => `${i ? "L" : "M"}${px(i).toFixed(1)},${py(v).toFixed(1)}`).join(" ");
+    grafico = `<svg viewBox="0 0 ${W} ${H}" aria-label="dB del ESP32"><path d="${d}" fill="none"
+      stroke="var(--marca)" stroke-width="1.6" vector-effect="non-scaling-stroke"></path></svg>`;
+  }
+
+  caja.innerHTML = `<section class="panel esp32">
+    <div><span class="et">ESP32 del aula · ahora mismo</span>
+      <span class="led ${esc(ultima.estado_led || "")}"></span><span class="dato">${esc(ultima.estado_led || "—")}</span></div>
+    <div><span class="et">dB (INMP441)</span><span class="dato">${ultima.nivel_db ?? "—"}</span></div>
+    <div><span class="et">Servo</span><span class="dato">pos ${ultima.posicion_servo ?? "—"}</span></div>
+    <div><span class="et">Última lectura</span><span class="dato ${viejo ? "viejo" : ""}">hace ${hace} s</span></div>
+    <div><span class="et">Últimos ${ys.length} s</span>${grafico}</div>
+  </section>`;
+  caja.hidden = false;
+}
+pintarEsp32();
+if (!window.DATOS_EMBEBIDOS) setInterval(pintarEsp32, 3000);
+
+// Con servidor local, la página se actualiza sola mientras corre una sesión.
+// run_session.py vuelca la sesión en curso cada pocos segundos, así que hay que
+// repintar también cuando cambia el contenido de la misma sesión, no solo cuando
+// aparece una nueva.
+if (!window.DATOS_EMBEBIDOS) {
+  const huella = (r) => r ? `${r.sesion_id}|${r.duracion_s}|${r.eventos?.total}|${(r.cambios_estado||[]).length}|${r.estado_final}` : "";
+  setInterval(async () => {
+    const nuevos = await cargar();
+    if (!nuevos || !nuevos.length) return;
+    const cambio = nuevos.length !== REPORTES.length ||
+      huella(nuevos[0]) !== huella(REPORTES[0]);
+    if (!cambio) return;
+    // Se conserva la sesión que el usuario estaba mirando, salvo que sea la que
+    // se está actualizando.
+    const verSesion = $("sel-sesion").value;
+    REPORTES = nuevos;
+    const salon = $("sel-salon").value;
+    const deSalon = REPORTES.filter((r) => r.salon === salon);
+    const elegida = deSalon.find((r) => r.sesion_id === verSesion) || deSalon[0];
+    if (elegida) {
+      refrescarSesiones();
+      if (elegida.sesion_id !== deSalon[0]?.sesion_id) {
+        $("sel-sesion").value = elegida.sesion_id;
+        pintar(elegida, deSalon);
+      }
+    } else {
+      iniciar(nuevos);
+    }
+  }, 5000);
+}
+</script>

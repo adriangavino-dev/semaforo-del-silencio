@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.pt
+data/audio/raw/*
+data/audio/clips/*
+data/video/raw/*
+data/video/clips/*
+!data/**/.gitkeep
+models/*.pkl
+models/*.json
+reports/*
+!reports/.gitkeep
+data/semaforo.db*
+data/video/ventanas.npz
+data/audio/embeddings.npz
+data/esp32_descubierto.json
+firmware/**/build/
+# contiene claves Wi-Fi; usar config.example.h
+firmware/semaforo_esp32/config.h
+
+# Grabaciones de alumnos (video, audio, fotos): nunca al repositorio.
+sesiones/
+
+# Generado por graphify (se reconstruye con: graphify update .)
+graphify-out/

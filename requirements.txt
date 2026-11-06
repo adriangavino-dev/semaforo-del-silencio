@@ -1,0 +1,27 @@
+# Semáforo del Silencio — subsistema de IA
+# Requiere Python 3.10 u 3.11 (TensorFlow no publica wheels para 3.12+ en CPU).
+
+# --- Visión ---
+ultralytics==8.3.155          # YOLOv8-Pose (yolov8n-pose.pt), preentrenado
+opencv-python==4.10.0.84
+lapx==0.9.4                    # seguimiento de identidad (ByteTrack) que usa ultralytics.track()
+
+# --- Audio ---
+tensorflow-cpu==2.15.1        # restricción: versión CPU, sin GPU
+tensorflow-hub==0.16.1        # carga de YAMNet
+sounddevice==0.4.7
+soundfile==0.12.1
+librosa==0.10.2.post1
+
+# --- Clasificadores propios (etapas 3-5) ---
+scikit-learn==1.5.2
+numpy==1.26.4                 # fijado: TF 2.15 no es compatible con numpy 2.x
+pandas==2.2.3
+joblib==1.4.2
+matplotlib==3.9.2             # matriz de confusión en reports/
+
+# --- Infraestructura ---
+requests==2.32.3
+PyYAML==6.0.2
+setuptools<81                 # tensorflow-hub 0.16.1 importa pkg_resources, eliminado en setuptools 81
+pyserial==3.5                # detectar el puerto COM del ESP32

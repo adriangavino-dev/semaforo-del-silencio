@@ -1,0 +1,235 @@
+{
+  "generado": "2026-10-20T11:51:52",
+  "n_fragmentos": 4899,
+  "por_clase": {
+    "silencio": 1500,
+    "voz_docente": 1221,
+    "murmullo": 1500,
+    "ruido_brusco": 678
+  },
+  "sesiones": {
+    "entrenamiento": [
+      "fsd_g0",
+      "fsd_g1",
+      "fsd_g2",
+      "fsd_g3",
+      "fsd_g4",
+      "fsd_g5",
+      "fsd_g6",
+      "fsd_g7"
+    ],
+    "validacion": [
+      "fsd_g8"
+    ],
+    "prueba": [
+      "fsd_g9"
+    ]
+  },
+  "resultados": {
+    "validacion": {
+      "exactitud_balanceada": 0.8362552076513008,
+      "n_muestras": 524,
+      "sesiones": [
+        "fsd_g8"
+      ],
+      "matriz_confusion": [
+        [
+          154,
+          1,
+          0,
+          0
+        ],
+        [
+          11,
+          96,
+          18,
+          9
+        ],
+        [
+          0,
+          14,
+          142,
+          7
+        ],
+        [
+          4,
+          5,
+          8,
+          55
+        ]
+      ],
+      "clases": [
+        "silencio",
+        "voz_docente",
+        "murmullo",
+        "ruido_brusco"
+      ],
+      "reporte": {
+        "silencio": {
+          "precision": 0.9112426035502958,
+          "recall": 0.9935483870967742,
+          "f1-score": 0.9506172839506173,
+          "support": 155.0
+        },
+        "voz_docente": {
+          "precision": 0.8275862068965517,
+          "recall": 0.7164179104477612,
+          "f1-score": 0.768,
+          "support": 134.0
+        },
+        "murmullo": {
+          "precision": 0.8452380952380952,
+          "recall": 0.8711656441717791,
+          "f1-score": 0.8580060422960725,
+          "support": 163.0
+        },
+        "ruido_brusco": {
+          "precision": 0.7746478873239436,
+          "recall": 0.7638888888888888,
+          "f1-score": 0.7692307692307693,
+          "support": 72.0
+        },
+        "accuracy": 0.8530534351145038,
+        "macro avg": {
+          "precision": 0.8396786982522216,
+          "recall": 0.8362552076513008,
+          "f1-score": 0.8364635238693647,
+          "support": 524.0
+        },
+        "weighted avg": {
+          "precision": 0.8505488791709299,
+          "recall": 0.8530534351145038,
+          "f1-score": 0.8501856475023298,
+          "support": 524.0
+        }
+      }
+    },
+    "prueba": {
+      "exactitud_balanceada": 0.7718386690655875,
+      "n_muestras": 506,
+      "sesiones": [
+        "fsd_g9"
+      ],
+      "matriz_confusion": [
+        [
+          176,
+          2,
+          0,
+          1
+        ],
+        [
+          9,
+          46,
+          43,
+          14
+        ],
+        [
+          0,
+          5,
+          144,
+          3
+        ],
+        [
+          0,
+          6,
+          10,
+          47
+        ]
+      ],
+      "clases": [
+        "silencio",
+        "voz_docente",
+        "murmullo",
+        "ruido_brusco"
+      ],
+      "reporte": {
+        "silencio": {
+          "precision": 0.9513513513513514,
+          "recall": 0.9832402234636871,
+          "f1-score": 0.967032967032967,
+          "support": 179.0
+        },
+        "voz_docente": {
+          "precision": 0.7796610169491526,
+          "recall": 0.4107142857142857,
+          "f1-score": 0.5380116959064327,
+          "support": 112.0
+        },
+        "murmullo": {
+          "precision": 0.7309644670050761,
+          "recall": 0.9473684210526315,
+          "f1-score": 0.8252148997134671,
+          "support": 152.0
+        },
+        "ruido_brusco": {
+          "precision": 0.7230769230769231,
+          "recall": 0.746031746031746,
+          "f1-score": 0.734375,
+          "support": 63.0
+        },
+        "accuracy": 0.8162055335968379,
+        "macro avg": {
+          "precision": 0.7962634395956258,
+          "recall": 0.7718386690655876,
+          "f1-score": 0.7661586406632167,
+          "support": 506.0
+        },
+        "weighted avg": {
+          "precision": 0.8187240532190014,
+          "recall": 0.8162055335968379,
+          "f1-score": 0.8005029660017164,
+          "support": 506.0
+        }
+      }
+    },
+    "validacion_cruzada": {
+      "exactitud_balanceada": 0.8252888282490052,
+      "sesiones": 10,
+      "matriz_confusion": [
+        [
+          1454,
+          35,
+          4,
+          7
+        ],
+        [
+          58,
+          854,
+          189,
+          120
+        ],
+        [
+          5,
+          131,
+          1307,
+          57
+        ],
+        [
+          16,
+          70,
+          76,
+          516
+        ]
+      ],
+      "clases": [
+        "silencio",
+        "voz_docente",
+        "murmullo",
+        "ruido_brusco"
+      ],
+      "voz_docente_confundida_con_murmullo": 0.1547911547911548
+    }
+  },
+  "criterios": {
+    "exactitud_balanceada": {
+      "valor": 0.7718386690655875,
+      "minimo": 0.75,
+      "cumple": true
+    },
+    "voz_docente_confundida_con_murmullo": {
+      "valor": 0.38392857142857145,
+      "maximo": 0.2,
+      "cumple": false
+    }
+  }
+}
