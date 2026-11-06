@@ -15,11 +15,15 @@
 //        32 ms: "@<n>:<base64>" con 512 muestras PCM de 16 bits a 16 kHz (el
 //        micrófono del aula para YAMNet y el clasificador de la laptop).
 //        Las líneas que no empiezan por ">" son mensajes para leer en el monitor.
-//   4. Con MODO_WIFI true (config.h) hace lo mismo por la red: servidor HTTP en el
-//      puerto 80 (POST /estado, POST /servo, GET /lectura, GET /prueba_led), envío
-//      de lecturas a la laptop y descubrimiento de su IP por UDP.
+//   4. Con MODO_WIFI true (config.h, lo configurado) hace lo mismo por la red:
+//      servidor HTTP en el puerto 80 (POST /estado, POST /servo, POST /audio,
+//      GET /lectura, GET /prueba_led), envío de lecturas a la laptop y
+//      descubrimiento de su IP por UDP. El audio viaja por UDP: cada paquete es
+//      [número de bloque, 4 bytes little-endian][512 muestras PCM de 16 bits].
 //
-// Si la laptop no responde, nada se bloquea: el ESP32 sigue decidiendo solo.
+// Unidad autónoma: basta el switch. Sin laptop y sin Wi-Fi el semáforo arranca
+// igual y decide solo por dB. Si la laptop deja de hablar, su orden caduca a los
+// ORDEN_LAPTOP_MS y el ESP32 retoma el control propio.
 //
 // Bibliotecas (Gestor de bibliotecas del IDE de Arduino):
 //   - ArduinoJson (Benoit Blanchon)
@@ -102,6 +106,11 @@ float medirDb() {
 static bool enviarAudio = false;
 static uint32_t bloqueAudio = 0;
 static int16_t pcmAudio[I2S_BLOQUE];
+static WiFiUDP udpAudio;
+static IPAddress audioDestino;
+static uint16_t audioPuerto = 0;          // 0 = por el cable; si no, UDP a la laptop
+static unsigned long audioHasta = 0;      // si la laptop calla, se deja de transmitir
+static uint8_t paqueteAudio[4 + I2S_BLOQUE * sizeof(int16_t)];
 static unsigned char base64Audio[((I2S_BLOQUE * 2 + 2) / 3) * 4 + 4];
 
 void enviarBloqueAudio(int nMuestrasEstereo) {
@@ -114,6 +123,16 @@ void enviarBloqueAudio(int nMuestrasEstereo) {
     if (v > 32767) v = 32767;
     if (v < -32768) v = -32768;
     pcmAudio[i] = (int16_t)v;
+  }
+  if (audioPuerto) {
+    if (WiFi.status() != WL_CONNECTED) return;
+    memcpy(paqueteAudio, &bloqueAudio, 4);
+    memcpy(paqueteAudio + 4, pcmAudio, n * sizeof(int16_t));
+    bloqueAudio++;
+    udpAudio.beginPacket(audioDestino, audioPuerto);
+    udpAudio.write(paqueteAudio, 4 + n * sizeof(int16_t));
+    udpAudio.endPacket();
+    return;
   }
   size_t largo = 0;
   if (mbedtls_base64_encode(base64Audio, sizeof(base64Audio), &largo,
@@ -149,6 +168,7 @@ float   nivelDb = 0.0f;
 float   nivelSuave = 0.0f;           // media móvil para que el LED no parpadee
 unsigned long ultimoEnvio = 0;
 unsigned long enviosOk = 0, enviosFallidos = 0;
+uint32_t arranques = 0;              // veces que ha arrancado: delata reinicios en el ensayo burn-in
 
 void encender(const String& estado) {
   led = estado;
@@ -188,7 +208,7 @@ void decidirPropio(float db) {
 }
 
 String lecturaJson() {
-  StaticJsonDocument<512> doc;   // trae red, laptop_url y contadores
+  StaticJsonDocument<640> doc;   // trae red, laptop_url y contadores
   doc["nivel_db"] = round(nivelSuave * 10) / 10.0;
   doc["estado_led"] = led;
   doc["posicion_servo"] = posicion;
@@ -197,6 +217,7 @@ String lecturaJson() {
   doc["uptime_s"] = millis() / 1000;
   doc["envios_ok"] = enviosOk;
   doc["envios_fallidos"] = enviosFallidos;
+  doc["arranques"] = arranques;
   doc["modo"] = MODO_WIFI ? "wifi" : "usb";
   doc["mic"] = micEstado;
   doc["mic_rms_izq"] = round(micRmsIzq);
@@ -204,6 +225,7 @@ String lecturaJson() {
   if (MODO_WIFI) {
     doc["ip"] = WiFi.localIP().toString();
     doc["red"] = WiFi.SSID();
+    doc["rssi"] = WiFi.RSSI();
     doc["laptop_url"] = laptopUrl;
     doc["laptop_descubierta"] = laptopDescubierta;
   }
@@ -218,6 +240,7 @@ bool aplicarEstado(const String& estado) {
   if (estado != "VERDE" && estado != "AMARILLO" && estado != "ROJO") return false;
   ordenLaptop = estado;
   ordenHasta = millis() + ORDEN_LAPTOP_MS;
+  audioHasta = ordenHasta;
   encender(estado);
   Serial.printf("[laptop] estado -> %s\n", estado.c_str());
   return true;
@@ -302,6 +325,7 @@ void procesarOrdenSerie(const String& linea) {
     autoPruebaLeds(2);
   } else if (doc.containsKey("audio")) {
     enviarAudio = (int)(doc["audio"] | 0) != 0;
+    audioPuerto = 0;
     bloqueAudio = 0;
     responderSerie(String("{\"ok\":true,\"orden\":\"audio\",\"activo\":") +
                    (enviarAudio ? "true" : "false") + ",\"muestras_hz\":" + String(I2S_MUESTRAS_HZ) +
@@ -357,6 +381,29 @@ void rutaServo() {
     "{\"ok\":true,\"posicion\":" + String(p) + ",\"tiempo_giro_ms\":" + String(girandoHasta - millis()) + "}");
 }
 
+// La laptop pide el audio e indica su puerto UDP; el destino es quien lo pidió.
+void rutaAudio() {
+  StaticJsonDocument<96> doc;
+  if (deserializeJson(doc, servidor.arg("plain"))) {
+    servidor.send(400, "application/json", "{\"ok\":false,\"error\":\"json\"}");
+    return;
+  }
+  bool activo = (int)(doc["activo"] | 0) != 0;
+  uint16_t puerto = doc["puerto"] | 0;
+  if (activo && !puerto) {
+    servidor.send(400, "application/json", "{\"ok\":false,\"error\":\"puerto\"}");
+    return;
+  }
+  audioDestino = servidor.client().remoteIP();
+  audioPuerto = activo ? puerto : 0;
+  audioHasta = millis() + ORDEN_LAPTOP_MS;
+  bloqueAudio = 0;
+  enviarAudio = activo;
+  servidor.send(200, "application/json",
+    String("{\"ok\":true,\"activo\":") + (activo ? "true" : "false") +
+    ",\"muestras_hz\":" + String(I2S_MUESTRAS_HZ) + ",\"muestras_por_bloque\":" + String(I2S_BLOQUE) + "}");
+}
+
 void rutaLectura() {
   servidor.send(200, "application/json", lecturaJson());
 }
@@ -368,24 +415,60 @@ void rutaPruebaLed() {
 
 void rutaRaiz() {
   servidor.send(200, "application/json",
-    "{\"ok\":true,\"dispositivo\":\"semaforo-esp32\",\"rutas\":[\"POST /estado\",\"POST /servo\",\"GET /lectura\",\"GET /prueba_led\"]}");
+    "{\"ok\":true,\"dispositivo\":\"semaforo-esp32\",\"rutas\":[\"POST /estado\",\"POST /servo\",\"POST /audio\",\"GET /lectura\",\"GET /prueba_led\"]}");
 }
 
 // ------------------------------------------------------------------ Envío a la laptop
-void enviarLectura() {
-  if (WiFi.status() != WL_CONNECTED) { enviosFallidos++; return; }
+// Corre en su propia tarea (núcleo 0): un POST lento o sin destino no frena el
+// bucle que lee el micrófono, y reconectar el Wi-Fi tampoco. El bucle deja la
+// lectura lista en jsonPorEnviar y avisa.
+static SemaphoreHandle_t mutexEnvio = NULL;
+static TaskHandle_t tareaEnvio = NULL;
+static String jsonPorEnviar, urlPorEnviar;
+
+void encolarLectura() {
+  if (tareaEnvio == NULL) return;
+  String json = lecturaJson();
+  xSemaphoreTake(mutexEnvio, portMAX_DELAY);
+  jsonPorEnviar = json;
+  urlPorEnviar = laptopUrl;
+  xSemaphoreGive(mutexEnvio);
+  xTaskNotifyGive(tareaEnvio);
+}
+
+void enviarLectura(const String& json, const String& url) {
   HTTPClient http;
   http.setConnectTimeout(800);      // si la laptop no está, no bloquear el bucle
   http.setTimeout(800);             // (el bucle también atiende peticiones entrantes)
   http.setReuse(false);
-  http.begin(laptopUrl);
+  http.begin(url);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("Connection", "close");
-  int codigo = http.POST(lecturaJson());
+  int codigo = http.POST(json);
   http.end();
   if (codigo == 200) enviosOk++; else enviosFallidos++;
   if (enviosFallidos > 0 && enviosFallidos % 30 == 1 && codigo != 200) {
     Serial.printf("[laptop] no responde (%d). Sigo con control propio.\n", codigo);
+  }
+}
+
+void bucleRed(void*) {
+  unsigned long ultimoIntento = 0;
+  for (;;) {
+    bool hayLectura = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1000)) > 0;
+    if (WiFi.status() != WL_CONNECTED) {
+      if (hayLectura) enviosFallidos++;
+      if (millis() - ultimoIntento > 15000) {
+        ultimoIntento = millis();
+        wifiMulti.run();                   // vuelve a probar todas las redes conocidas
+      }
+      continue;
+    }
+    if (!hayLectura) continue;
+    xSemaphoreTake(mutexEnvio, portMAX_DELAY);
+    String json = jsonPorEnviar, url = urlPorEnviar;
+    xSemaphoreGive(mutexEnvio);
+    enviarLectura(json, url);
   }
 }
 
@@ -395,8 +478,10 @@ void enviarLectura() {
 // mismo firmware sirve en casa, en la universidad o con hotspot, sin regrabar.
 void anunciarse() {
   if (WiFi.status() != WL_CONNECTED) return;
-  IPAddress difusion = WiFi.localIP();
-  difusion[3] = 255;                       // difusión de la subred (x.x.x.255)
+  // Difusión de la subred según su máscara: el hotspot de un iPhone es /28
+  // (172.20.10.x), así que x.x.x.255 no llegaría a nadie.
+  IPAddress ip = WiFi.localIP(), mascara = WiFi.subnetMask(), difusion;
+  for (int i = 0; i < 4; i++) difusion[i] = ip[i] | (uint8_t)~mascara[i];
   String msg = "{\"dispositivo\":\"semaforo-esp32\",\"ip\":\"" + WiFi.localIP().toString() +
                "\",\"puerto\":80,\"led\":\"" + led + "\"}";
   udp.beginPacket(difusion, PUERTO_DESCUBRIMIENTO);
@@ -441,6 +526,8 @@ void setup() {
 
   memoria.begin("semaforo", false);
   laptopUrl = memoria.getString("laptop_url", LAPTOP_URL_INICIAL);
+  arranques = memoria.getUInt("arranques", 0) + 1;
+  memoria.putUInt("arranques", arranques);
 
   if (!MODO_WIFI) {
     WiFi.mode(WIFI_OFF);
@@ -453,10 +540,11 @@ void setup() {
   }
 
   WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);       // sin ahorro de energía del radio: el audio no se entrecorta
   for (size_t i = 0; i < N_REDES; i++) wifiMulti.addAP(REDES[i].ssid, REDES[i].clave);
   Serial.printf("\nBuscando alguna de las %d redes conocidas", (int)N_REDES);
   unsigned long inicio = millis();
-  while (wifiMulti.run() != WL_CONNECTED && millis() - inicio < 25000) {
+  while (wifiMulti.run() != WL_CONNECTED && millis() - inicio < ESPERA_WIFI_MS) {
     delay(300);
     Serial.print(".");
   }
@@ -478,7 +566,11 @@ void setup() {
   servidor.on("/prueba_led", HTTP_GET, rutaPruebaLed);
   servidor.on("/estado",  HTTP_POST, rutaEstado);
   servidor.on("/servo",   HTTP_POST, rutaServo);
+  servidor.on("/audio",   HTTP_POST, rutaAudio);
   servidor.begin();
+
+  mutexEnvio = xSemaphoreCreateMutex();
+  xTaskCreatePinnedToCore(bucleRed, "red", 8192, NULL, 1, &tareaEnvio, 0);
 }
 
 void loop() {
@@ -500,11 +592,16 @@ void loop() {
     ordenLaptop = "";
     decidirPropio(nivelSuave);
   }
+  if (enviarAudio && audioPuerto && ORDEN_LAPTOP_MS > 0 && millis() > audioHasta) {
+    enviarAudio = false;                    // la laptop se fue: no gastar batería ni aire
+    audioPuerto = 0;
+    Serial.println("[audio] la laptop dejo de hablar; se corta el envio");
+  }
 
   if (millis() - ultimoEnvio >= ENVIAR_CADA_MS) {
     ultimoEnvio = millis();
     responderSerie(lecturaJson());          // por el cable, siempre
-    if (MODO_WIFI) enviarLectura();         // por la red, solo con Wi-Fi
+    if (MODO_WIFI) encolarLectura();        // por la red, solo con Wi-Fi
   }
   if (!MODO_WIFI) return;
 
@@ -516,12 +613,4 @@ void loop() {
     anunciarse();
   }
   escucharRespuesta();
-
-  if (WiFi.status() != WL_CONNECTED) {
-    static unsigned long ultimoIntento = 0;
-    if (millis() - ultimoIntento > 15000) {
-      ultimoIntento = millis();
-      wifiMulti.run();                     // vuelve a probar todas las redes conocidas
-    }
-  }
 }

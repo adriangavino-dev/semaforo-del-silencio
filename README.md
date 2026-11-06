@@ -387,8 +387,56 @@ Sobre cada persona: `#ID confianza` arriba y `de pie / sentado  v<velocidad de m
 
 Mira y escucha el aula, decide el color del semáforo, registra los eventos y
 guarda todo en la carpeta de la sesión sin intervención manual. El
-color se manda al ESP32 (LEDs) por el cable USB en cuanto cambia y se mantiene
-hasta el siguiente cambio; al cerrar la sesión el semáforo vuelve a VERDE.
+color se manda al ESP32 (LEDs) por Wi-Fi en cuanto cambia y se mantiene mientras
+dure la sesión; al cerrarla el semáforo vuelve a VERDE y el ESP32 retoma su control
+propio por dB.
+
+### Puesta en marcha: unidad autónoma por Wi-Fi
+
+La unidad no necesita cable a la PC: se enciende con su switch, y sin laptop y
+sin Wi-Fi igual decide el color sola, por dB. La laptop agrega la cámara, los
+modelos y el tablero, y se conecta a la unidad por el hotspot.
+
+1. En el iPhone: Ajustes > Compartir Internet > activar **Maximizar compatibilidad**.
+   Sin esto el iPhone 16 puede ofrecer solo 5 GHz, y el ESP32 solo ve 2,4 GHz.
+   Dejar esa pantalla abierta hasta que se conecten los dos equipos.
+2. Conectar la laptop al hotspot y encender la unidad con el switch.
+3. En una terminal, el tablero (también recibe la telemetría y descubre al ESP32):
+
+   ```bash
+   python scripts\serve_dashboard.py
+   ```
+
+   Debe imprimir `[descubrimiento] ESP32 en 172.20.10.x:80`. Si Windows pregunta
+   por el firewall, permitir Python en redes públicas y privadas.
+4. En otra terminal, la sesión:
+
+   ```bash
+   python scripts\run_session.py
+   ```
+
+Red y clave están en `firmware/semaforo_esp32/config.h` (lista `REDES`), fuera del
+repositorio. Puertos: HTTP 80 en el ESP32, HTTP 8000 en la laptop, UDP 8765
+(descubrimiento) y UDP 8766 (audio). Se graba una vez por USB; después no hace
+falta el cable. Para volver al cable en banco: `MODO_WIFI false` en `config.h` y
+`esp32.transporte: usb` en `config.yaml`.
+
+| Si pasa esto | Qué hace la unidad |
+|---|---|
+| Laptop encendida y en sesión | Manda la laptop; repite el color cada 3 s y se mantiene lo que dure la clase |
+| La laptop se apaga o se cae el Wi-Fi | A los 15 s (`ORDEN_LAPTOP_MS`) vuelve a decidir sola por dB y deja de transmitir audio |
+| No hay hotspot al encender | Espera 8 s, sigue por dB y reintenta conectarse cada 15 s en segundo plano |
+
+### Ensayo Burn-in
+
+```bash
+python scripts\ensayo_burnin.py --horas 2
+```
+
+Con la unidad en batería y `serve_dashboard.py` corriendo, pregunta al ESP32 cada
+5 s y registra tiempo continuo, reinicios, tasa de envío (≥ 99 %) y señal Wi-Fi.
+La temperatura y la batería se leen con termómetro y multímetro, y se escriben
+mientras corre: `t 38.5` y `v 3.92`. Deja CSV, JSON y gráfica en `reports/`.
 
 ### Una carpeta por sesión, con grabación y fotos
 
@@ -429,13 +477,13 @@ sesiones/
 ### De dónde sale el sonido: `audio.fuente`
 
 - `esp32` (**lo configurado ahora**): todo el sonido sale del INMP441 del ESP32;
-  el micrófono de la laptop no se abre. Por el mismo cable USB, a 921 600
-  baudios, el ESP32 manda:
+  el micrófono de la laptop no se abre. Por Wi-Fi (o por el cable USB, a 921 600
+  baudios, si `esp32.transporte: usb`), el ESP32 manda:
   - una lectura por segundo con los **dB calibrados** (`DB_OFFSET` en
     `firmware/semaforo_esp32/config.h`; un aula tranquila marca ~35–40), y
-  - con `esp32.audio_por_usb: true`, el **audio completo** a 16 kHz en bloques de
-    32 ms (`@<n>:<base64>`). Con él la laptop corre YAMNet + el clasificador de
-    4 clases (`src/audio/captura_esp32.py`).
+  - con `esp32.audio_remoto: true`, el **audio completo** a 16 kHz en bloques de
+    32 ms (por UDP: `[n, 4 bytes][PCM]`; por cable: `@<n>:<base64>`). Con él la
+    laptop corre YAMNet + el clasificador de 4 clases (`src/audio/captura_esp32.py`).
 
   La clase de audio sale del modelo y los dB de la regla, del ESP32 (55 dB →
   AMARILLO, 65 → ROJO). Sin modelo entrenado, decide solo por nivel, igual que

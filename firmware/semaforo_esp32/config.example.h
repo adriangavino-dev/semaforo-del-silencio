@@ -4,12 +4,11 @@
 
 // ---------------------------------------------------------------- Modo
 // Cómo habla el ESP32 con la laptop:
-//   MODO_WIFI false -> solo por el cable USB (puerto serie, 115200 baudios).
-//                      Arranca al instante, no hay que configurar redes ni IPs
-//                      y no depende del Wi-Fi del aula. Es el modo recomendado.
-//   MODO_WIFI true  -> además levanta Wi-Fi + servidor HTTP + descubrimiento
-//                      UDP (lo de abajo). El cable sigue funcionando igual.
-#define MODO_WIFI false
+//   MODO_WIFI true  -> Wi-Fi + servidor HTTP + descubrimiento UDP + audio por
+//                      UDP. Es la unidad autónoma: basta el switch, sin cable a
+//                      la PC. Lo que está configurado.
+//   MODO_WIFI false -> solo por el cable USB (para depurar en banco).
+#define MODO_WIFI true
 
 // ---------------------------------------------------------------- Wi-Fi
 // (solo se usa si MODO_WIFI es true)
@@ -29,6 +28,9 @@ static const RedWifi REDES[] = {
     {"NOMBRE_HOTSPOT", "CLAVE_HOTSPOT"},
 };
 #define N_REDES (sizeof(REDES) / sizeof(REDES[0]))
+// Cuánto espera la red al arrancar antes de seguir sin ella. El semáforo no
+// depende del Wi-Fi: la reconexión sigue en segundo plano.
+#define ESPERA_WIFI_MS 8000
 
 // ---------------------------------------------------------------- Laptop
 // NO hace falta poner la IP de la laptop: el ESP32 la descubre solo. Cada pocos
@@ -84,9 +86,9 @@ static const int ANGULOS_SERVO[] = {30, 90, 150}; // izquierda, centro, derecha
 #define ASENTAMIENTO_MS 400
 
 // ---------------------------------------------------------------- Prioridad
-// El color que manda la laptop se mantiene hasta que la laptop mande otro:
-// si el aula está en AMARILLO una hora, el LED está en amarillo una hora.
-// 0 = la orden nunca caduca (lo que quiere el equipo).
-// Un valor en ms (p. ej. 30000) haría que, si la laptop deja de hablar ese
-// tiempo, el ESP32 vuelva a decidir solo por dB con el INMP441.
-#define ORDEN_LAPTOP_MS 0
+// Cuánto dura la orden de color de la laptop sin que se refresque. La laptop la
+// repite cada esp32.reenviar_estado_s (3 s), así que el color se mantiene todo
+// lo que dure la sesión (1 h, 1 día). Si la laptop se apaga o se cae el Wi-Fi,
+// a los 15 s el ESP32 vuelve a decidir solo por dB y no se queda congelado.
+// 0 = la orden nunca caduca (solo para depurar por cable).
+#define ORDEN_LAPTOP_MS 15000

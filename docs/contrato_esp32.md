@@ -311,3 +311,28 @@ void loop() {
 
 Bibliotecas: `ArduinoJson`, `ESP32Servo` (gestor de bibliotecas del IDE de
 Arduino). `WiFi`, `WebServer` y `HTTPClient` vienen con el núcleo del ESP32.
+
+## Audio por Wi-Fi
+
+La laptop pide el audio con `POST /audio` y el ESP32 lo manda por UDP a quien lo
+pidió, al puerto indicado.
+
+```json
+{"activo": 1, "puerto": 8766}
+```
+
+Respuesta: `{"ok": true, "activo": true, "muestras_hz": 16000, "muestras_por_bloque": 512}`.
+Con `{"activo": 0}` se corta. Cada paquete UDP pesa 1028 bytes y lleva un bloque de
+32 ms:
+
+| Bytes | Contenido |
+|---|---|
+| 0–3 | Número de bloque, `uint32` little-endian; empieza en 0 y detecta pérdidas |
+| 4–1027 | 512 muestras PCM de 16 bits little-endian, 16 kHz, mono |
+
+El envío se corta solo si la laptop deja de repetir el color por `ORDEN_LAPTOP_MS`.
+
+## Campos añadidos a la lectura
+
+`rssi` (dBm) y `arranques` (contador que sobrevive al apagado: si sube durante un
+ensayo, la unidad se reinició).

@@ -396,16 +396,17 @@ def main() -> int:
         # Micrófono del aula: el ESP32 manda el audio por el cable y aquí corren
         # YAMNet + el clasificador. Los dB para la regla siguen siendo los del
         # ESP32 (calibrados con DB_OFFSET), no los que calcula la laptop.
-        if bool(conf["esp32"].get("audio_por_usb", True)) and hasattr(cliente, "iniciar_audio"):
+        if bool(conf["esp32"].get("audio_remoto", True)) and hasattr(cliente, "iniciar_audio"):
             from src.audio.captura_esp32 import CapturaESP32
 
             hilo = HiloAudio(conf, captura=CapturaESP32(cliente, conf))
             if cg.get("audio"):
                 hilo.grabador = GrabadorAudio(reporte.carpeta / "audio.wav", int(conf["audio"]["sample_rate"]))
             hilo.start()
-            print("[audio] fuente: micrófono del ESP32 (INMP441) por USB -> YAMNet + clasificador")
+            print(f"[audio] fuente: micrófono del ESP32 (INMP441) por {conf['esp32'].get('transporte')} "
+                  "-> YAMNet + clasificador")
         else:
-            print("[audio] fuente: micrófono del ESP32, solo dB (sin audio por USB)")
+            print("[audio] fuente: micrófono del ESP32, solo dB (sin audio remoto)")
 
     previas: dict[int, np.ndarray] = {}
     ultimo_registro = 0.0

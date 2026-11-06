@@ -174,16 +174,18 @@ fusion:
 esp32:
   habilitado: true
   # Por dónde habla la laptop con el ESP32:
-  #   usb  -> por el cable (recomendado): no hay que configurar redes ni IPs.
-  #           En el firmware, MODO_WIFI false en config.h.
-  #   wifi -> por la red: el ESP32 se anuncia por UDP y la laptop lo descubre.
+  #   wifi -> por la red (lo configurado): unidad autónoma, sin cable a la PC. El
+  #           ESP32 se anuncia por UDP y la laptop lo descubre. Laptop y ESP32 en
+  #           el mismo hotspot; serve_dashboard.py debe estar corriendo.
   #           Para probar sin hardware: scripts/simular_esp32.py con ip 127.0.0.1 y puerto 8081.
-  transporte: usb
+  #   usb  -> por el cable, para depurar en banco. En el firmware, MODO_WIFI false.
+  transporte: wifi
   puerto_serie: auto # "auto" busca el chip del ESP32; o fijo, p. ej. "COM3"
   baudios: 921600 # igual que BAUDIOS_SERIE en firmware/semaforo_esp32/config.h
-  # Con audio.fuente: esp32, el ESP32 manda también el audio del INMP441 por el
-  # cable y la laptop corre YAMNet + el clasificador sobre el sonido del aula.
-  audio_por_usb: true
+  # Con audio.fuente: esp32, el ESP32 manda también el audio del INMP441 (por UDP
+  # o por el cable) y la laptop corre YAMNet + el clasificador sobre el aula.
+  audio_remoto: true
+  puerto_audio: 8766 # UDP de la laptop donde llega el audio por Wi-Fi
   # Solo para transporte wifi. La ip es un respaldo: si el ESP32 se anuncia por
   # la red, la laptop usa la IP descubierta (data/esp32_descubierto.json).
   ip: "192.168.18.205"
@@ -192,9 +194,9 @@ esp32:
   ruta_servo: "/servo" # laptop -> ESP32: orden de girar la cámara
   timeout_s: 2.0
   min_intervalo_envio_s: 1.0
-  # El estado se repite cada tanto aunque no cambie. El ESP32 lo mantiene de
-  # todos modos hasta la siguiente orden; el refresco solo sirve para que, si
-  # el ESP32 se reinicia a mitad de sesión, recupere el color en segundos.
+  # El estado se repite cada tanto aunque no cambie: es lo que mantiene el color
+  # mientras dure la sesión. Si se deja de repetir por ORDEN_LAPTOP_MS (15 s, en
+  # el firmware), el ESP32 vuelve a su control propio por dB.
   reenviar_estado_s: 3.0
 
 # ---------------------------------------------------------------- SERVO

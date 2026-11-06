@@ -9,6 +9,8 @@ Se comporta como el firmware real:
   durante unos segundos; si deja de recibir, vuelve a su propio control.
 - Cada segundo envía `POST /api/esp32/lectura` al servidor de la laptop con
   su nivel, su color y la posición del servo.
+- Con `POST /audio` manda audio por UDP con el mismo formato que el firmware
+  ([número de bloque, 4 bytes][512 muestras PCM]): un tono de 440 Hz.
 
 Sirve para verificar los dos sentidos del contrato y para la exposición si el
 circuito no está listo. Cuando esté el ESP32 real, basta apuntar
@@ -22,6 +24,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
+import struct
 import sys
 import threading
 import time
@@ -52,6 +56,9 @@ class EstadoESP32:
         self.estado_laptop: str | None = None
         self.estado_laptop_hasta = 0.0
         self.recibidos = 0
+        self.detener_audio: threading.Event | None = None
+        self.envios_ok = 0
+        self.envios_fallidos = 0
         self.inicio = time.time()
         self.rng = np.random.default_rng(1)
 
@@ -82,8 +89,27 @@ class EstadoESP32:
                 "posicion_servo": self.posicion_servo,
                 "girando": time.time() < self.girando_hasta,
                 "uptime_s": int(time.time() - self.inicio),
+                "envios_ok": self.envios_ok,
+                "envios_fallidos": self.envios_fallidos,
+                "arranques": 1,
+                "rssi": -55,
                 "origen": "esp32-simulado",
             }
+
+
+def bucle_audio(destino: tuple[str, int], detener: threading.Event) -> None:
+    """Bloques de 32 ms por UDP, como enviarBloqueAudio() del firmware."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    t = np.arange(512) / 16000.0
+    n = 0
+    proximo = time.time()
+    while not detener.is_set():
+        pcm = (6000 * np.sin(2 * np.pi * 440 * (t + n * 0.032))).astype("<i2")
+        sock.sendto(struct.pack("<I", n) + pcm.tobytes(), destino)
+        n += 1
+        proximo += 0.032
+        time.sleep(max(0.0, proximo - time.time()))
+    sock.close()
 
 
 def hacer_manejador(estado: EstadoESP32, tiempo_giro_ms: int):
@@ -134,6 +160,17 @@ def hacer_manejador(estado: EstadoESP32, tiempo_giro_ms: int):
                 print(f"  [esp32] servo -> posición {pos}")
                 self._json({"ok": True, "posicion": pos, "tiempo_giro_ms": tiempo_giro_ms})
 
+            elif self.path == "/audio":
+                if estado.detener_audio is not None:
+                    estado.detener_audio.set()
+                    estado.detener_audio = None
+                if datos.get("activo"):
+                    estado.detener_audio = threading.Event()
+                    threading.Thread(target=bucle_audio, daemon=True, args=(
+                        (self.client_address[0], int(datos["puerto"])), estado.detener_audio)).start()
+                    print(f"  [esp32] audio por UDP -> {self.client_address[0]}:{datos['puerto']}")
+                self._json({"ok": True, "activo": bool(datos.get("activo"))})
+
             else:
                 self._json({"ok": False, "error": "ruta desconocida"}, 404)
 
@@ -161,8 +198,10 @@ def bucle_envio(estado: EstadoESP32, url_laptop: str, cada_s: float, detener: th
             r = requests.post(url_laptop, json=lectura, timeout=2.0)
             r.raise_for_status()
             fallos = 0
+            estado.envios_ok += 1
         except Exception as exc:  # noqa: BLE001
             fallos += 1
+            estado.envios_fallidos += 1
             if fallos in (1, 10, 60):
                 print(f"  [esp32] no llego a la laptop ({url_laptop}): {exc}", file=sys.stderr)
         detener.wait(cada_s)
