@@ -695,6 +695,18 @@ docs/contrato_esp32.md    contrato laptop <-> ESP32 y esbozo del firmware
 scripts/                  grabación, corte, etiquetado, sesión y tablero
 ```
 
+## Entrega de consolidación (semana 13)
+
+```bash
+python docs\entrega\generar_expediente.py
+```
+
+Genera en `entrega_semana13/` el expediente técnico, el panel fotográfico y
+`PENDIENTES.md`. Las medidas, costos y datos del equipo van en
+`docs/entrega/mediciones.yaml`; las fotos, en `entrega_semana13/fotos/` con nombres
+`1_1.jpg` a `5_2.jpg`; los planos, en `entrega_semana13/planos/`. Lo que falte sale
+resaltado en amarillo: nada se rellena con supuestos.
+
 ## Desviaciones respecto de la especificación
 
 1. **Instalación de Python 3.11 aparte.** La laptop tenía únicamente Python 3.14,

@@ -24,3 +24,6 @@ sesiones/
 
 # Generado por graphify (se reconstruye con: graphify update .)
 graphify-out/
+
+# Entrega del curso: se regenera con docs/entrega/generar_expediente.py
+entrega_semana13/

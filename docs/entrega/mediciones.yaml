@@ -1,0 +1,97 @@
+# Datos del expediente que solo salen del prototipo físico.
+#
+# Rellena lo que deje de ser null y vuelve a generar:
+#     python docs/entrega/generar_expediente.py
+# Lo que siga en null sale resaltado en amarillo en el PDF y en PENDIENTES.md.
+# Nada se inventa: un dato vacío se queda vacío.
+
+equipo:
+  nombre: null          # nombre del equipo
+  integrantes: []       # ["Nombre Apellido", ...]
+
+mecanico:
+  material: null        # p. ej. PETG, acrílico 3 mm
+  proceso: null         # impresión FDM, corte láser
+  dimensiones_mm: null  # "L x A x H"
+  masa_g: null
+  holgura_mm: null      # medida con galga; criterio ≤ 0.5
+  fijacion: null        # tornillería o encastre usado
+  software_cad: null    # Fusion 360 / SolidWorks
+  # Exportados del CAD del equipo. Copiarlos a entrega_semana13/cad/
+  archivos: {step: null, stl: null, dxf: null}
+
+electronico:
+  tipo_placa: null      # PCB fabricada o placa perforada
+  software_pcb: null    # KiCad, EasyEDA...
+  servo_modelo: null    # p. ej. SG90 (confirmar el real)
+  pptc_valor: null      # corriente de sostenimiento del fusible, p. ej. 1.1 A
+  c1_valor: null        # p. ej. 470 µF 16 V
+  # Copiar a entrega_semana13/pcb/
+  gerber: null
+  taladrado_nc: null
+
+logico:
+  repositorio_url: null # enlace de GitHub o GitLab, si se publica
+  dashboard_url: null   # enlace activo del tablero el día de la entrega
+
+# Precio unitario en soles. Los que traen "referencial" son de tienda: cámbialos
+# por lo que pagaron. fabricante/precio en null salen como pendientes.
+bom:
+  - {item: "ESP32 DevKit (módulo WROOM-32, USB-UART CP2102)", espec: "Wi-Fi 2,4 GHz, 240 MHz, 5 V por VIN", fabricante: null, cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
+  - {item: "Micrófono I²S INMP441", espec: "MEMS digital, 3,3 V", fabricante: null, cantidad: 1, precio: 20.00, fuente: "referencial Naylamp"}
+  - {item: "Servomotor", espec: "Confirmar modelo; 5 V", fabricante: null, cantidad: 1, precio: 10.00, fuente: "referencial Naylamp (SG90)"}
+  - {item: "LED verde / amarillo / rojo", espec: "Confirmar diámetro y brillo", fabricante: null, cantidad: 3, precio: null, fuente: null}
+  - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: null, cantidad: 3, precio: null, fuente: null}
+  - {item: "Condensador electrolítico", espec: "470 µF, ≥ 10 V", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Fusible PPTC", espec: "Confirmar corriente", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Batería", espec: "Confirmar tipo y capacidad", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Switch maestro", espec: "Confirmar modelo", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Placa (PCB o perforada)", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Conectores con traba", espec: "J1 a J4", fabricante: null, cantidad: 4, precio: null, fuente: null}
+  - {item: "Envolvente y material de fabricación", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "Tornillería y precintos", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
+
+# Autonomía: medir con multímetro en serie con la salida de la batería, a 5 V.
+autonomia:
+  bateria_mah: null           # capacidad nominal
+  bateria_v: null             # tensión nominal de la celda, p. ej. 3.7
+  eficiencia: 0.85            # del convertidor a 5 V, si lo hay; cambiar si se conoce
+  corriente_ma:               # corriente medida en cada estado
+    muestreo: null            # unidad encendida, Wi-Fi conectado, sin audio
+    transmision: null         # con run_session.py activo (audio por UDP)
+    espera: null              # sin hotspot, reintentando conexión
+  servo_giro_ma: null         # durante un giro
+  horas_medidas: null         # tiempo real hasta que se apagó
+
+# Se elige solo el último reports/burnin_*.json. Esto es para otro registro.
+burnin:
+  temperatura_ambiente_c: null
+
+mvis:
+  - {interfaz: "Mecánica ↔ Electrónica", criterio: "Placa fija sin flexión; 0 interferencias entre componentes y envolvente; puertos accesibles", evidencia: null, estado: null}
+  - {interfaz: "Electrónica ↔ Software", criterio: "Pines del firmware iguales al cableado: autotest de LED 3/3, servo 3/3, micrófono con señal", evidencia: "Medido en banco por USB: LED 3/3, servo 3/3 (30°/90°/150°), micrófono 35 → 57 dB al hablar. Falta repetir en la unidad final por Wi-Fi.", estado: "parcial"}
+  - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Protocolo probado contra el simulador: 266 bloques de audio, 0 perdidos. Falta medir con la placa real en el hotspot.", estado: "parcial"}
+  - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: null, estado: null}
+  - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: null, estado: null}
+  - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: null, estado: null}
+
+kpi:
+  sonometro_contrastado: null   # true cuando se compare DB_OFFSET contra un sonómetro
+  dif_sonometro_db: null        # diferencia máxima a 40, 55 y 65 dB; criterio ≤ 3
+  fondo_aula_vacia_db: null     # aula real, sin alumnos
+  nivel_clase_db: null          # promedio de una clase real
+  verde_pct: null               # % del tiempo en VERDE en esa clase
+  eventos_por_sesion: null
+
+# Texto de cada foto del panel. Ajústalo a lo que muestre la foto real.
+pies_de_foto:
+  "1.1": "Prototipo de banco: ESP32, INMP441, LED y servo sobre protoboard con cables jumper."
+  "1.2": "Unidad consolidada: un solo bloque cerrado, sin componentes expuestos ni cableado suelto."
+  "2.1": "Envolvente cerrada con fijación mecánica, sin adhesivos ni cintas provisionales."
+  "2.2": "Alineación de puertos, switch y aberturas del micrófono y del semáforo con la envolvente."
+  "3.1": "Arnés interno ordenado con precintos, conectores con traba y aislamiento termocontraíble."
+  "3.2": "Placa y batería fijadas a la envolvente, con fusible en la línea de alimentación."
+  "4.1": "Arranque autónomo con el switch: el semáforo enciende y se conecta sin cable USB a la PC."
+  "4.2": "Tablero en tiempo real con la telemetría que llega de la unidad por Wi-Fi."
+  "5.1": "Unidad levantada con una mano: bloque rígido, sin juego interno."
+  "5.2": "Unidad operando sobre la mesa durante el ensayo Burn-in."
