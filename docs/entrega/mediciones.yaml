@@ -6,8 +6,13 @@
 # Nada se inventa: un dato vacío se queda vacío.
 
 equipo:
-  nombre: null          # nombre del equipo
-  integrantes: []       # ["Nombre Apellido", ...]
+  nombre: null          # opcional: si queda vacío, la fila no sale en la portada
+  integrantes:
+    - {nombre: "Daniel David Vasquez Sayra", codigo: "PREMT01016"}
+    - {nombre: "Daniel Matias Yarango Romero", codigo: "20261PREMT01201"}
+    - {nombre: "Adrian Piero Gavino Navarrete", codigo: "202510483"}
+    - {nombre: "Sebastian Alexander Balarezo Chihuan", codigo: "20261PREMT01124"}
+    - {nombre: "Oscar Martin Anaya Casas", codigo: "20261PREMT01150"}
 
 # Cómo se alimenta la unidad hoy. bateria: true activa el protocolo de autonomía.
 alimentacion:

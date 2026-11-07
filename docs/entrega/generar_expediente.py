@@ -614,11 +614,11 @@ def portada(h: list, m: dict, p: Pendientes) -> None:
                                 ("BACKGROUND", (2, 0), (2, 0), ROJO)]))
     franja.hAlign = "LEFT"
     h += [franja, Spacer(1, 1.2 * cm)]
-    integrantes = ", ".join(eq.get("integrantes") or []) or p.falta("Integrantes del equipo")
+    integrantes = "<br/>".join(f"{i['nombre']} · {i['codigo']}" for i in eq.get("integrantes") or [])
     h += [tabla([
         ["Docente", "MSc. Nimrod Angel Rojas Muñoz"],
-        ["Equipo", p.valor(eq.get("nombre"), "Nombre del equipo")],
-        ["Integrantes", integrantes],
+        *([["Equipo", eq["nombre"]]] if eq.get("nombre") else []),
+        ["Integrantes", integrantes or p.falta("Integrantes del equipo")],
         ["Tema", "6.13 · Consolidación del prototipo: transición hacia la unidad monolítica final"],
         ["ODS", "ODS 4 · Meta 4.a"],
         ["Versión", f"{git('describe', '--tags', '--always')} · {datetime.now():%d/%m/%Y}"],
@@ -630,7 +630,7 @@ def expediente(m: dict, conf: dict, p: Pendientes) -> Path:
     ruta = SALIDA / "Expediente_Tecnico_PI6002.pdf"
     doc = SimpleDocTemplate(str(ruta), pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=1.8 * cm,
                             bottomMargin=1.9 * cm, title="Semáforo del Silencio: expediente técnico",
-                            author=", ".join(m["equipo"].get("integrantes") or []) or "Equipo Semáforo del Silencio")
+                            author=", ".join(i["nombre"] for i in m["equipo"].get("integrantes") or []) or "Equipo Semáforo del Silencio")
     h: list = []
     portada(h, m, p)
     seccion_sistema(h, m, conf, p)
