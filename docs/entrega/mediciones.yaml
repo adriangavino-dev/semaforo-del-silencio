@@ -2,8 +2,11 @@
 #
 # Rellena lo que deje de ser null y vuelve a generar:
 #     python docs/entrega/generar_expediente.py
-# Lo que siga en null sale resaltado en amarillo en el PDF y en PENDIENTES.md.
-# Nada se inventa: un dato vacío se queda vacío.
+# Lo que siga en null sale en el PDF como "Sin dato" y se lista en PENDIENTES.md.
+# Los datos de diseño pueden ser supuestos; los resultados de ensayos, nunca.
+
+# true: versión para entregar, sin recuadros amarillos. false: resalta lo que falta.
+cierre: true
 
 equipo:
   nombre: "Semáforo del Silencio"
@@ -16,7 +19,7 @@ equipo:
 
 # Cómo se alimenta la unidad hoy. bateria: true activa el protocolo de autonomía.
 alimentacion:
-  tipo: "USB 5 V desde la laptop"
+  tipo: "USB 5 V, a través del módulo ELEGOO con interruptor"
   bateria: false
 
 mecanico:
@@ -24,42 +27,38 @@ mecanico:
   proceso: "Impresión 3D FDM"
   dimensiones_mm: "Caja 90,5 × 129,5 × 51,4; tapa 90,5 × 129,5 × 5,5"  # medido del 3MF
   masa_g: 1100
-  holgura_mm: null      # medida con galga; criterio ≤ 0.5
-  fijacion: "Encastre por labio de 3 mm en la tapa (según el modelo)"  # confirmar en la pieza real
-  software_cad: null    # Fusion 360 / SolidWorks
+  holgura_mm: "0,0 nominal en CAD; sin medir en la pieza"
+  fijacion: "Placa atornillada a la caja; tapa con labio de encastre de 3 mm"
+  software_cad: "Fusion 360"
   # Exportados del CAD del equipo. Copiarlos a entrega_semana13/cad/
-  archivos: {step: null, stl: "caja_final.stl, tapa_final.stl", dxf: null}
+  archivos: {step: null, stl: "caja_final.stl, tapa_final.stl", dxf: "envolvente.dxf"}
 
 electronico:
-  tipo_placa: null      # PCB fabricada o placa perforada
-  software_pcb: null    # KiCad, EasyEDA...
-  servo_modelo: null    # p. ej. SG90 (confirmar el real)
-  pptc_valor: null      # corriente de sostenimiento del fusible, p. ej. 1.1 A
-  c1_valor: null        # p. ej. 470 µF 16 V
+  tipo_placa: "Placa perforada de doble cara, soldada"
+  software_pcb: "No aplica, sin ruteo de pistas"
+  servo_modelo: "TowerPro MG90S"
   # Copiar a entrega_semana13/pcb/
-  gerber: null
-  taladrado_nc: null
+  gerber: "No aplica, placa perforada"
+  taladrado_nc: "No aplica, placa perforada"
 
 logico:
-  repositorio_url: null # enlace de GitHub o GitLab, si se publica
-  dashboard_url: null   # enlace activo del tablero el día de la entrega
+  repositorio_url: "https://github.com/adriangavino-dev/semaforo-del-silencio"
+  dashboard_url: "http://localhost:8000, en la laptop de la unidad"
 
 # Precio unitario en soles. Los que traen "referencial" son de tienda: cámbialos
 # por lo que pagaron. fabricante/precio en null salen como pendientes.
 bom:
-  - {item: "ESP32 DevKit (módulo WROOM-32, USB-UART CP2102)", espec: "Wi-Fi 2,4 GHz, 240 MHz, 5 V por VIN", fabricante: "Desconocido", cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
+  - {item: "ESP32 DevKit (módulo WROOM-32, CP2102, USB-C)", espec: "Wi-Fi 2,4 GHz, 240 MHz", fabricante: "Desconocido", cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
   - {item: "Micrófono I²S INMP441", espec: "MEMS digital, 3,3 V", fabricante: "Desconocido", cantidad: 1, precio: 20.00, fuente: "referencial Naylamp"}
-  - {item: "Servomotor SG90", espec: "Micro servo, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 10.00, fuente: "referencial Naylamp"}
+  - {item: "Servomotor MG90S", espec: "Micro servo de engranajes metálicos, 5 V", fabricante: "TowerPro", cantidad: 1, precio: 25.00, fuente: "referencial Naylamp"}
+  - {item: "Módulo de alimentación", espec: "Salidas 3,3 V y 5 V, con interruptor", fabricante: "ELEGOO", cantidad: 1, precio: 12.00, fuente: "estimado"}
   - {item: "LED verde / amarillo / rojo", espec: "THT 5 mm", fabricante: "Desconocido", cantidad: 3, precio: 0.40, fuente: "referencial Naylamp"}
   - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: "Desconocido", cantidad: 3, precio: 0.10, fuente: "estimado"}
-  - {item: "Condensador electrolítico", espec: "470 µF, ≥ 10 V", fabricante: "Desconocido", cantidad: 1, precio: 1.00, fuente: "estimado"}
-  - {item: "Fusible PPTC", espec: "Rearmable, 1,1 A", fabricante: "Desconocido", cantidad: 1, precio: 2.00, fuente: "estimado"}
-  - {item: "Cable USB de alimentación", espec: "Micro USB, 1 m, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 13.90, fuente: "referencial Falabella"}
-  - {item: "Switch maestro", espec: "Interruptor de 2 posiciones", fabricante: "Desconocido", cantidad: 1, precio: 2.50, fuente: "estimado"}
-  - {item: "Placa perforada", espec: "7 × 9 cm", fabricante: "Desconocido", cantidad: 1, precio: 3.50, fuente: "estimado"}
-  - {item: "Conectores con traba", espec: "JST-XH, J1 a J4", fabricante: "Desconocido", cantidad: 4, precio: 1.00, fuente: "estimado"}
-  - {item: "Envolvente impresa en 3D", espec: "PLA, ≈ 176 g (142 cm³ del modelo)", fabricante: "Fabricación propia", cantidad: 1, precio: 15.00, fuente: "estimado, S/. 85 por kg"}
-  - {item: "Tornillería y precintos", espec: "Lote de ensamble", fabricante: "Desconocido", cantidad: 1, precio: 5.00, fuente: "estimado"}
+  - {item: "Cable USB de alimentación", espec: "USB-C, 1 m, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 13.90, fuente: "referencial Falabella"}
+  - {item: "Placa perforada", espec: "Doble cara", fabricante: "Desconocido", cantidad: 1, precio: 3.50, fuente: "estimado"}
+  - {item: "Cable plano y conectores Dupont", espec: "Micrófono y servo", fabricante: "Desconocido", cantidad: 1, precio: 5.00, fuente: "estimado"}
+  - {item: "Envolvente impresa en 3D", espec: "PLA azul, ≈ 176 g (142 cm³ del modelo)", fabricante: "Fabricación propia", cantidad: 1, precio: 15.00, fuente: "estimado, S/. 85 por kg"}
+  - {item: "Tornillería", espec: "Fijación de la placa", fabricante: "Desconocido", cantidad: 1, precio: 3.00, fuente: "estimado"}
 
 # Autonomía: medir con multímetro en serie con la salida de la batería, a 5 V.
 autonomia:
@@ -78,30 +77,31 @@ burnin:
   temperatura_ambiente_c: null
 
 mvis:
-  - {interfaz: "Mecánica ↔ Electrónica", criterio: "Placa fija sin flexión; 0 interferencias entre componentes y envolvente; puertos accesibles", evidencia: null, estado: null}
+  - {interfaz: "Mecánica ↔ Electrónica", criterio: "Placa fija sin flexión; 0 interferencias entre componentes y envolvente; puertos accesibles", evidencia: "Placa atornillada dentro de la caja y LED alineados en los agujeros de ø5 mm (fotos del 6/11). El micrófono sale por un cable plano externo, sin integrarse a la envolvente.", estado: "parcial"}
   - {interfaz: "Electrónica ↔ Software", criterio: "Pines del firmware iguales al cableado: autotest de LED 3/3, servo 3/3, micrófono con señal", evidencia: "Medido en banco por USB: LED 3/3, servo 3/3 (30°/90°/150°), micrófono 35 → 57 dB al hablar. Falta repetir en la unidad final por Wi-Fi.", estado: "parcial"}
   - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Placa real, Wi-Fi doméstico de -80 a -86 dBm. Prueba de 14 s: color en 64-78 ms, telemetría 14/14, audio 1,7 % perdido. Sesión de 18,6 min: 83,7 % de órdenes entregadas, por debajo del criterio; hay que repetir con señal fuerte.", estado: "parcial"}
-  - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: null, estado: null}
-  - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: null, estado: null}
-  - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: null, estado: null}
+  - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: "Sin medir: la unidad no tiene sensor interno y no se usó termómetro.", estado: "sin medir"}
+  - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: "El módulo de alimentación tiene interruptor, pero sigue dependiendo de un cable USB. La prueba de visibilidad a 8 m no se ejecutó.", estado: "parcial"}
+  - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: "El tablero mostró color, nivel y eventos en vivo durante la sesión. Sin prueba cronometrada con usuarios.", estado: "parcial"}
 
 kpi:
   sonometro_contrastado: null   # true cuando se compare DB_OFFSET contra un sonómetro
   dif_sonometro_db: null        # diferencia máxima a 40, 55 y 65 dB; criterio ≤ 3
-  fondo_aula_vacia_db: null     # aula real, sin alumnos
-  nivel_clase_db: null          # promedio de una clase real
-  verde_pct: null               # % del tiempo en VERDE en esa clase
-  eventos_por_sesion: null
+  # Números: medidos en aula real. Texto: datos de la prueba de banco, sin comparar con la norma.
+  fondo_aula_vacia_db: "30 dB relativos; cuarto, no aula"
+  nivel_clase_db: "30,1 dB relativos; prueba de banco"
+  verde_pct: "80,3 % en prueba de banco"
+  eventos_por_sesion: "17 en 18,6 min, prueba de banco"
 
 # Texto de cada foto del panel. Ajústalo a lo que muestre la foto real.
 pies_de_foto:
-  "1.1": "Prototipo de banco: ESP32, INMP441, LED y servo sobre protoboard con cables jumper."
-  "1.2": "Unidad consolidada: un solo bloque cerrado, sin componentes expuestos ni cableado suelto."
-  "2.1": "Envolvente cerrada con fijación mecánica, sin adhesivos ni cintas provisionales."
-  "2.2": "Alineación de puertos, switch y aberturas del micrófono y del semáforo con la envolvente."
-  "3.1": "Arnés interno ordenado con precintos, conectores con traba y aislamiento termocontraíble."
-  "3.2": "Placa y batería fijadas a la envolvente, con fusible en la línea de alimentación."
-  "4.1": "Arranque autónomo con el switch: el semáforo enciende y se conecta sin cable USB a la PC."
-  "4.2": "Tablero con la sesión real del 6 de noviembre: estados, niveles, eventos y fotos por cambio de color."
+  "1.1": "Primera versión: LED y resistencias sobre placa perforada, con caja blanca de prueba."
+  "1.2": "Unidad final en caja azul impresa en PLA, con el semáforo al frente y el micrófono por cable plano."
+  "2.1": "Interior de la envolvente: placa atornillada a la caja, sin adhesivos ni cintas."
+  "2.2": "LED del semáforo alineados en los agujeros de ø5 mm de la caja."
+  "3.1": "Cableado interno sobre la placa perforada, con conectores para el micrófono y el servo."
+  "3.2": "ESP32 montado en la placa, con su puerto USB-C alineado al borde de la caja."
+  "4.1": "Módulo de alimentación ELEGOO con interruptor y LED de encendido. La energía llega por cable USB."
+  "4.2": "Tablero en vivo durante la sesión del 6/11, en AMARILLO, junto a la unidad. Fotograma de video."
   "5.1": "Unidad levantada con una mano: bloque rígido, sin juego interno."
   "5.2": "Unidad operando sobre la mesa durante el ensayo Burn-in."

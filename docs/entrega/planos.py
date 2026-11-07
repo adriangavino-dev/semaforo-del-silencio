@@ -267,6 +267,25 @@ def explosionada(caja, tapa) -> None:
     plt.close(fig)
 
 
+def guardar_dxf(ruta: Path, caja, tapa) -> None:
+    """DXF R12 con las vistas 2D, en mm, separadas para que no se encimen."""
+    (vc, tc), (vt, tt) = caja, tapa
+    ac, at = aristas(vc, tc), aristas(vt, tt)
+    alto, pared = vc[:, 1].max(), float(np.unique(vc[:, 1].round(2))[1])
+    filtra = lambda a, b: ac[((vc[ac][:, :, 1] >= a - 0.01) & (vc[ac][:, :, 1] <= b + 0.01)).all(1)]  # noqa: E731
+    vistas = [("CAJA_PLANTA", vc, ac, (0, 1), (0, 0)),
+              ("CAJA_SUPERIOR", vc, filtra(alto - pared, alto), (0, 2), (120, 0)),
+              ("CAJA_INFERIOR", vc, filtra(0, pared), (0, 2), (120, 70)),
+              ("TAPA", vt, at, (0, 2), (240, 129.5))]
+    filas = ["0", "SECTION", "2", "ENTITIES"]
+    for capa, v, ar, (i, j), (dx, dy) in vistas:
+        for a, b in ar:
+            filas += ["0", "LINE", "8", capa, "10", f"{v[a, i] + dx:.3f}", "20", f"{v[a, j] + dy:.3f}", "30", "0.0",
+                      "11", f"{v[b, i] + dx:.3f}", "21", f"{v[b, j] + dy:.3f}", "31", "0.0"]
+    filas += ["0", "ENDSEC", "0", "EOF"]
+    ruta.write_text("\n".join(filas) + "\n", encoding="ascii")
+
+
 def generar() -> dict | None:
     rutas = CAD / "caja final.3mf", CAD / "Tapa final.3mf"
     if not all(r.exists() for r in rutas):
@@ -275,6 +294,7 @@ def generar() -> dict | None:
     caja, tapa = leer_3mf(rutas[0]), leer_3mf(rutas[1])
     guardar_stl(CAD / "caja_final.stl", *caja)
     guardar_stl(CAD / "tapa_final.stl", *tapa)
+    guardar_dxf(CAD / "envolvente.dxf", caja, tapa)
     filas = plano(caja, tapa)
     explosionada(caja, tapa)
     medida = lambda v: v.max(0) - v.min(0)  # noqa: E731

@@ -99,19 +99,22 @@ VINETA = e("vineta", leftIndent=11, bulletIndent=1, spaceAfter=2.5)
 class Pendientes:
     """Lleva la cuenta de lo que falta y lo marca en el documento."""
 
-    def __init__(self) -> None:
+    def __init__(self, cierre: bool = False) -> None:
         self.lista: dict[str, list[str]] = {}
         self.area = "General"
+        self.cierre = cierre     # versión de entrega: se declara lo que falta, sin resaltarlo
 
     def falta(self, texto: str, visible: str = "completar") -> str:
         self.lista.setdefault(self.area, [])
         if texto not in self.lista[self.area]:
             self.lista[self.area].append(texto)
+        if self.cierre:
+            return f'<i>{"Sin dato" if visible == "completar" else visible}</i>'
         return f'<font backColor="{RESALTE}">&nbsp;[{visible}]&nbsp;</font>'
 
-    def valor(self, v, texto: str, unidad: str = "") -> str:
+    def valor(self, v, texto: str, unidad: str = "", visible: str = "completar") -> str:
         if v in (None, "", [], {}):
-            return self.falta(texto)
+            return self.falta(texto, visible)
         return f"{v}{(' ' + unidad) if unidad else ''}"
 
 
@@ -188,7 +191,7 @@ def seccion_sistema(h: list, m: dict, conf: dict, p: Pendientes) -> None:
         h += [Paragraph(
             f"Hoy la unidad se alimenta por {al['tipo']}. La guía exige una fuente definitiva y arranque con switch sin "
             f"cable USB a la PC, así que este punto no se cumple todavía. Definición: "
-            f"{p.falta('Definir la fuente definitiva y validarla con el docente', 'fuente definitiva')}.", CUERPO)]
+            f"{p.falta('Definir la fuente definitiva y validarla con el docente', 'por definir con el docente')}.", CUERPO)]
 
 
 def seccion_mecanica(h: list, m: dict, p: Pendientes) -> None:
@@ -228,16 +231,14 @@ def seccion_electronica(h: list, m: dict, conf: dict, p: Pendientes) -> None:
     h += [KeepTogether([
         Paragraph("A.2 Paquete electrónico (Garage)", H2),
         figura(SALIDA / "diagramas" / "esquematico.png", 16.2),
-        Paragraph("Figura 2. Esquemático con los pines del firmware. Los valores marcados * deben coincidir con la "
-                  "placa fabricada.", PIE)])]
+        Paragraph("Figura 2. Esquemático con los pines del firmware y los módulos de la unidad.", PIE)])]
     h += [tabla([
         ["Ref.", "Componente", "Valor", "Encapsulado"],
         ["U1", "ESP32 DevKit", "Módulo ESP32-WROOM-32", "Tarjeta de desarrollo con pines"],
         ["U2", "INMP441", "Micrófono I²S, 3,3 V", "Módulo con pines"],
         ["R1–R3", "Resistencias de los LED", "220 Ω, 1/4 W", "Axial"],
         ["D1–D3", "LED verde, amarillo y rojo", "Corriente de salida ≈ 6 mA con Vf de 2 V", "THT 5 mm"],
-        ["C1", "Desacople del servo", p.valor(el.get("c1_valor"), "Valor real de C1"), "Radial"],
-        ["F1", "Fusible rearmable PPTC", p.valor(el.get("pptc_valor"), "Corriente de sostenimiento de F1"), "Confirmar"],
+        ["U3", "Módulo de alimentación ELEGOO", "3,3 V y 5 V, con interruptor", "Módulo con pines"],
         ["M1", "Servomotor", p.valor(el.get("servo_modelo"), "Modelo real del servo"), "3 hilos"],
     ], [1.6, 5.4, 6, 4])]
     h += [Spacer(1, 6)]
@@ -326,7 +327,7 @@ def seccion_bom(h: list, m: dict, p: Pendientes) -> None:
 
 def seccion_mvis(h: list, m: dict, p: Pendientes) -> None:
     p.area = "B. Matriz MVIS"
-    color = {"cumple": "#2E9E5B", "parcial": "#D99A00", "no cumple": "#D6453D"}
+    color = {"cumple": "#2E9E5B", "parcial": "#D99A00", "no cumple": "#D6453D", "sin medir": "#5B6775"}
     filas = [["Interfaz", "Criterio de aceptación", "Evidencia", "Estado"]]
     for f in m["mvis"]:
         est = f.get("estado")
@@ -353,7 +354,7 @@ def seccion_autonomia(h: list, m: dict, p: Pendientes) -> None:
     for k, (n, cond) in nombres.items():
         v = med.get(k)
         filas.append([n, cond, coma(teorica[k]),
-                      p.valor(v, f"Corriente medida en {n.lower()}"),
+                      p.valor(v, f"Corriente medida en {n.lower()}", visible="Sin medir"),
                       f"{100 * (v - teorica[k]) / teorica[k]:+.0f} %" if v else "—"])
     al = m["alimentacion"]
     h += [Paragraph("B.2 Protocolo de autonomía energética", H2)]
@@ -431,8 +432,8 @@ def seccion_ods(h: list, m: dict, p: Pendientes) -> None:
     exac = v["audio"]["validacion_cruzada"]["exactitud_balanceada"]
 
     def cumple(valor, umbral, menor=True):
-        if valor is None:
-            return "—"
+        if not isinstance(valor, (int, float)):
+            return "—"       # sin dato, o medido en banco: no se compara con la norma
         ok = valor <= umbral if menor else valor >= umbral
         return f'<font color="{"#2E9E5B" if ok else "#D6453D"}"><b>{"Cumple" if ok else "Excede"}</b></font>'
 
@@ -448,7 +449,7 @@ def seccion_ods(h: list, m: dict, p: Pendientes) -> None:
          p.valor(k.get("fondo_aula_vacia_db"), "Ruido de fondo en aula real vacía", "dB"), cumple(k.get("fondo_aula_vacia_db"), 35)],
         ["Nivel durante clase", "ECA Ruido Perú, DS 085-2003-PCM, zona de protección especial (ambiental, diurno)", "50 dB",
          p.valor(k.get("nivel_clase_db"), "Nivel promedio de una clase real", "dB"), cumple(k.get("nivel_clase_db"), 50)],
-        ["Tiempo de clase en VERDE", "Meta del equipo; sin norma aplicable", "Definir con el docente",
+        ["Tiempo de clase en VERDE", "Meta del equipo; sin norma aplicable", "No definido",
          p.valor(k.get("verde_pct"), "Porcentaje de tiempo en VERDE de una clase real", "%"), "—"],
         ["Eventos de disrupción por sesión", "Línea base del aula", "Comparar antes y después",
          p.valor(k.get("eventos_por_sesion"), "Eventos por sesión en una clase real"), "—"],
@@ -457,7 +458,7 @@ def seccion_ods(h: list, m: dict, p: Pendientes) -> None:
     ], [4.2, 5, 2.4, 3.2, 2.2])]
     if not k.get("sonometro_contrastado"):
         h += [Paragraph(
-            f"Calibración: {p.falta('Contrastar DB_OFFSET contra un sonómetro a 40, 55 y 65 dB (criterio ≤ 3 dB)', 'contrastar con sonómetro')}. "
+            f"Calibración: {p.falta('Contrastar DB_OFFSET contra un sonómetro a 40, 55 y 65 dB (criterio ≤ 3 dB)', 'sin contrastar con sonómetro')}. "
             "Sin ese contraste los dB de la unidad son relativos, y no pueden compararse contra la OMS o el ECA.", CUERPO)]
     else:
         h += [Paragraph(f"Calibración contrastada con sonómetro: diferencia máxima de {k.get('dif_sonometro_db')} dB.", CUERPO)]
@@ -548,6 +549,15 @@ def seccion_prueba(h: list, conf: dict, p: Pendientes) -> None:
         ["Órdenes al ESP32", f"{e['enviados']} de {ordenes} entregadas ({pct(e['enviados'] / ordenes)})"],
     ]
     h += [tabla(filas, [4.5, 12.5])]
+    enlaces = sorted(cfg.ruta_de("reports").glob("enlace_*.json"))
+    if enlaces:
+        en = json.loads(enlaces[-1].read_text(encoding="utf-8"))
+        clases = ", ".join(f"{c}: {n} s" for c, n in sorted(en["clases"].items(), key=lambda x: -x[1]))
+        h += [Paragraph(f"Repetición con el código corregido ({coma(en['minutos'])} min)", H2),
+              tabla([["Medida", "Resultado"],
+                     ["Órdenes entregadas", f"{en['ordenes_entregadas']} de {en['ordenes_totales']} ({coma(en['ordenes_pct'])} %)"],
+                     ["Audio recibido", f"{en['audio_bloques']} bloques, {coma(en['audio_perdida_pct'], 2)} % perdidos"],
+                     ["Clasificación", clases or "Sin bloques clasificados"]], [4.5, 12.5])]
     h += [Paragraph("Hallazgos de la prueba", H2)]
     for texto in (
         f"<b>El audio no arrancó en esta sesión.</b> El Wi-Fi débil (-80 a -86 dBm) hizo fallar los primeros intentos y "
@@ -658,6 +668,27 @@ PANEL_SEC = [
 ]
 
 
+def preparar_fotos() -> None:
+    """Saca las fotos del panel de las originales: de una sola salen varios encuadres."""
+    carpeta = SALIDA / "fotos"
+    recortes = {  # original -> {foto del panel: (x0, y0, x1, y1) en fracción, o None para entera}
+        "antes_placa": {"1_1": None},
+        "cerrada": {"1_2": None, "2_2": (0.25, 0.33, 0.50, 0.55)},
+        "interior": {"2_1": None, "3_1": (0.18, 0.13, 0.78, 0.72), "3_2": (0.16, 0.54, 0.42, 0.88),
+                     "4_1": (0.37, 0.64, 0.78, 0.88)},
+    }
+    for original, salidas in recortes.items():
+        ruta = next((carpeta / f"{original}{x}" for x in (".jpg", ".jpeg", ".png") if (carpeta / f"{original}{x}").exists()), None)
+        if ruta is None:
+            continue
+        with ImagenPIL.open(ruta) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            w, h = im.size
+            for nombre, caja in salidas.items():
+                parte = im if caja is None else im.crop((int(caja[0] * w), int(caja[1] * h), int(caja[2] * w), int(caja[3] * h)))
+                parte.save(carpeta / f"{nombre}.jpg", quality=94)
+
+
 def buscar_foto(num: str) -> Path | None:
     base = SALIDA / "fotos" / num.replace(".", "_")
     return next((base.with_suffix(x) for x in (".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG")
@@ -741,11 +772,12 @@ def main() -> int:
     registrar_fuentes()
     for sub in ("fotos", "planos", "cad", "pcb"):
         (SALIDA / sub).mkdir(parents=True, exist_ok=True)
+    preparar_fotos()
     diagramas.generar(SALIDA / "diagramas")
     planos.generar()
     conf = cfg.cargar()
     m = yaml.safe_load((AQUI / "mediciones.yaml").read_text(encoding="utf-8"))
-    p = Pendientes()
+    p = Pendientes(bool(m.get("cierre")))
     a = expediente(m, conf, p)
     b = panel(m, p)
     c = escribir_pendientes(p)

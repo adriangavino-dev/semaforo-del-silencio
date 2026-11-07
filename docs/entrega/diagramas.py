@@ -83,8 +83,8 @@ def arquitectura(carpeta: Path) -> None:
          fondo=NAVY, borde=NAVY, color="white", tam=11.5)
     ax.texts[-1].set_color("#C9D6E3")
     caja(ax, 0.4, 5.15, 1.75, 0.95, "INMP441", "Micrófono I²S")
-    caja(ax, 3.75, 5.15, 1.75, 0.95, "Servo", "3 posiciones")
-    caja(ax, 0.4, 1.0, 1.75, 1.1, "Fuente 5 V", "Hoy: USB de la laptop\nDefinitiva: por definir")
+    caja(ax, 3.75, 5.15, 1.75, 0.95, "Servo MG90S", "3 posiciones")
+    caja(ax, 0.4, 1.0, 1.75, 1.1, "Módulo 5 V", "ELEGOO, con\ninterruptor; entra USB")
     caja(ax, 3.75, 1.0, 1.75, 1.1, "Semáforo", "LED V / A / R")
     flecha(ax, (1.45, 5.15), (2.2, 4.75), texto="I²S", ptexto=(1.45, 4.86))
     flecha(ax, (3.65, 4.75), (4.45, 5.15), texto="PWM", ptexto=(4.45, 4.86))
@@ -163,7 +163,7 @@ def esquematico(carpeta: Path) -> None:
     p = pines()
     fig, ax = lienzo(13, 7.6)
     ax.text(0.1, 7.35, "Diagrama esquemático", fontsize=12.5, fontweight="bold", color=NAVY)
-    ax.text(0.1, 7.07, "Pines tomados del firmware. Contrastar valores marcados * contra la placa fabricada.",
+    ax.text(0.1, 7.07, "Pines tomados del firmware; módulos según la unidad fabricada.",
             fontsize=9.2, color=GRIS)
     # ESP32
     x0, y0, w, h = 5.0, 1.25, 3.0, 4.75
@@ -189,7 +189,7 @@ def esquematico(carpeta: Path) -> None:
         ax.text(1.1, y, señal, va="center", fontsize=9)
         ax.plot([2.95, x0 - 0.3], [y, y], color=c, lw=1.4)
         pin_izq(y, pin)
-    ax.text(1.1, 2.62, "L/R → GND *", va="center", fontsize=8.5, color=GRIS)
+    ax.text(1.1, 2.62, "L/R → GND", va="center", fontsize=8.5, color=GRIS)
 
     def nodo(x, y):
         ax.add_patch(Circle((x, y), 0.055, fc=TINTA, ec=TINTA, zorder=5))
@@ -201,7 +201,7 @@ def esquematico(carpeta: Path) -> None:
     y_s = 5.1
     pin_der(y_s, f"D{p['PIN_SERVO']}")
     ax.add_patch(Rectangle((xr + 0.75, 4.72), 1.35, 0.8, fc="white", ec=TINTA, lw=1.3, zorder=3))
-    ax.text(xr + 1.42, 5.24, "M1 · servo", ha="center", fontweight="bold", fontsize=9.3, zorder=4)
+    ax.text(xr + 1.42, 5.24, "M1 · MG90S", ha="center", fontweight="bold", fontsize=9.3, zorder=4)
     ax.text(xr + 1.42, 4.94, "S / + / GND", ha="center", fontsize=8.3, color=GRIS, zorder=4)
     ax.plot([xr, xr + 0.75], [y_s, y_s], color=AZUL, lw=1.4)
     ax.plot([xr + 2.1, xret], [4.95, 4.95], color=TINTA, lw=1.3)
@@ -226,17 +226,12 @@ def esquematico(carpeta: Path) -> None:
 
     # Riel de potencia
     yr = 6.55
-    ax.plot([1.45, 12.2], [yr, yr], color=ROJO, lw=2)
+    ax.plot([3.5, 12.2], [yr, yr], color=ROJO, lw=2)
     ax.text(12.25, yr, "5 V", va="center", color=ROJO, fontweight="bold")
-    ax.add_patch(Rectangle((0.5, yr - 0.32), 0.95, 0.64, fc="white", ec=TINTA, lw=1.3, zorder=3))
-    ax.text(0.97, yr, "J1\nFuente 5 V", ha="center", va="center", fontsize=7.2, zorder=4)
-    ax.add_patch(Rectangle((1.75, yr - 0.14), 0.75, 0.28, fc="white", ec=TINTA, lw=1.3, zorder=3))
-    ax.text(2.12, yr + 0.3, "F1 PPTC *", ha="center", fontsize=8.2)
-    ax.plot([2.95, 3.5], [yr, yr], color="white", lw=4, zorder=3)
-    ax.plot([2.95, 3.42], [yr, yr + 0.24], color=TINTA, lw=2.2, zorder=4)
-    nodo(2.95, yr)
-    nodo(3.5, yr)
-    ax.text(3.25, yr + 0.34, "SW1 maestro", ha="center", fontsize=8.2)
+    ax.add_patch(Rectangle((0.5, yr - 0.34), 3.0, 0.68, fc="white", ec=TINTA, lw=1.3, zorder=3))
+    ax.text(2.0, yr + 0.1, "U3 · Módulo ELEGOO", ha="center", va="center", fontsize=8.8, fontweight="bold", zorder=4)
+    ax.text(2.0, yr - 0.15, "entrada USB, interruptor, salidas 5 V y 3,3 V", ha="center", va="center", fontsize=7.2,
+            color=GRIS, zorder=4)
     # VIN
     xv = x0 + w / 2 - 0.5
     ax.plot([xv, xv], [yr, y0 + h], color=ROJO, lw=1.6)
@@ -245,13 +240,7 @@ def esquematico(carpeta: Path) -> None:
     # Servo a 5 V y C1
     ax.plot([xr + 1.42] * 2, [yr, 5.52], color=ROJO, lw=1.5)
     nodo(xr + 1.42, yr)
-    xc = xr + 3.05
-    ax.plot([xc, xc], [yr, 3.55], color=ROJO, lw=1.4)
-    nodo(xc, yr)
-    ax.plot([xc - 0.2, xc + 0.2], [3.55, 3.55], color=TINTA, lw=2)
-    ax.plot([xc - 0.2, xc + 0.2], [3.4, 3.4], color=TINTA, lw=2)
-    ax.plot([xc, xc], [3.4, 0.75], color=TINTA, lw=1.4)
-    ax.text(xc + 0.08, 3.95, "C1\n470 µF *\n≥ 10 V", fontsize=8, va="center")
+    xc = xret
     # Tierra común
     yg = 0.75
     ax.plot([0.5, xc], [yg, yg], color=TINTA, lw=2)
@@ -266,16 +255,16 @@ def arnes(carpeta: Path) -> None:
     p = pines()
     fig, ax = lienzo(13, 5.8)
     ax.text(0.1, 5.55, "Diagrama de arneses y conectores", fontsize=12.5, fontweight="bold", color=NAVY)
-    ax.text(0.1, 5.27, "Colores de cable propuestos: reemplazarlos por los reales del arnés.", fontsize=9.2, color=GRIS)
+    ax.text(0.1, 5.27, "Conexiones de la unidad; los colores son de referencia.", fontsize=9.2, color=GRIS)
     ax.add_patch(Rectangle((4.9, 0.55), 3.2, 4.3, fc=PANEL, ec=NAVY, lw=1.6))
     ax.text(6.5, 4.5, "Placa principal", ha="center", fontweight="bold", color=NAVY, fontsize=11)
     ax.text(6.5, 4.2, "con ESP32 DevKit", ha="center", color=GRIS, fontsize=9)
-    izq = [("J1", "Fuente 5 V", "2 vías · PPTC + switch", 3.3, [("5 V", ROJO), ("GND", TINTA)]),
-           ("J2", "INMP441", "5 vías · corto, trenzado", 1.45, [("SD", AZUL), ("SCK", "#7A5AF8"), ("WS", "#0E9384"),
+    izq = [("J1", "Módulo ELEGOO", "2 vías · salida de 5 V", 3.3, [("5 V", ROJO), ("GND", TINTA)]),
+           ("J2", "INMP441", "5 vías · cable plano", 1.45, [("SD", AZUL), ("SCK", "#7A5AF8"), ("WS", "#0E9384"),
                                                                  ("3V3", ROJO), ("GND", TINTA)])]
     der = [("J3", "Semáforo", "4 vías · LED + retorno", 3.3, [(f"D{p['PIN_LED_VERDE']}", VERDE), (f"D{p['PIN_LED_AMARILLO']}", AMBAR),
                                                               (f"D{p['PIN_LED_ROJO']}", ROJO), ("GND", TINTA)]),
-           ("J4", "Servo", "3 vías · propio del servo", 1.45, [(f"D{p['PIN_SERVO']}", "#E67700"), ("5 V", ROJO), ("GND", "#7A4A1E")])]
+           ("J4", "Servo MG90S", "3 vías · propio del servo", 1.45, [(f"D{p['PIN_SERVO']}", "#E67700"), ("5 V", ROJO), ("GND", "#7A4A1E")])]
     for ref, nom, nota, y, hilos in izq:
         caja(ax, 0.3, y - 0.45, 2.35, 1.2, nom, nota, tam=10)
         ax.add_patch(Rectangle((4.65, y - 0.42), 0.25, 1.1, fc=NAVY, ec=NAVY))
