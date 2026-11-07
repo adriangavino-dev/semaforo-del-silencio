@@ -567,20 +567,20 @@ def seccion_prueba(h: list, conf: dict, p: Pendientes) -> None:
     ):
         h += [Paragraph(texto, VINETA, bulletText="•")]
     if ruta_foto and ruta_foto.exists():
-        h += [KeepTogether([figura(ruta_foto, 8.5), Paragraph(
+        h += [KeepTogether([figura(ruta_foto, 6.6), Paragraph(
             "Figura 6. Foto tomada por el sistema al pasar a ROJO, con el nivel y la causa registrados.", PIE)])]
 
 
 def seccion_referencias(h: list) -> None:
-    h += [Paragraph("Referencias", H2)]
-    for r in (
+    refs = [
         "Berglund, Lindvall y Schwela (eds.). <i>Guidelines for Community Noise</i>. OMS, 1999.",
         "Presidencia del Consejo de Ministros del Perú. DS 085-2003-PCM, Estándares Nacionales de Calidad Ambiental para Ruido.",
         "Naciones Unidas. Objetivo de Desarrollo Sostenible 4, meta 4.a.",
         "Shield y Dockrell. External and internal noise surveys of London primary schools. <i>JASA</i>, 2004.",
         "Espressif Systems. <i>ESP32 Series Datasheet</i> v5.3, tabla 5-4.",
-    ):
-        h += [Paragraph(r, e("ref", fontSize=7.8, leading=10.8, spaceAfter=2))]
+    ]
+    h += [KeepTogether([Paragraph("Referencias", H2)] +
+                       [Paragraph(r, e("ref", fontSize=7.8, leading=10.8, spaceAfter=2)) for r in refs])]
 
 
 class Numerado:
