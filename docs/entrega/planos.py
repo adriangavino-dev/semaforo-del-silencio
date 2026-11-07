@@ -93,7 +93,8 @@ def perforaciones(v: np.ndarray, ar: np.ndarray) -> list[dict]:
         otros = [i for i in range(3) if i != eje]
         clave = (eje, *np.round(p[:, otros].min(0), 1), *np.round(tam[otros], 1))
         redondo = len(idx) > 12
-        salida[clave] = {"eje": eje, "otros": otros, "origen": p[:, otros].min(0), "tam": tam[otros], "redondo": redondo}
+        salida[clave] = {"eje": eje, "otros": otros, "origen": p[:, otros].min(0), "tam": tam[otros], "redondo": redondo,
+                         "nivel": float(p[:, eje].mean())}
     return list(salida.values())
 
 
@@ -133,13 +134,19 @@ def plano(caja, tapa) -> list[dict]:
     ax2 = fig.add_axes([0.36, 0.40, 0.21, 0.47])
     vista(ax2, vc, ac, (2, 1), "Caja · lateral (Z-Y)")
     cota(ax2, (0, 0), (vc[:, 2].max(), 0), -7, f"{vc[:, 2].max():.1f}")
-    ax3 = fig.add_axes([0.03, 0.05, 0.30, 0.28])
-    vista(ax3, vc, ac, (0, 2), "Caja · superior (X-Z)")
+    # Cada cara por separado: juntas, sus aberturas se ven encimadas aunque estén a 129,5 mm.
+    alto = vc[:, 1].max()
+    pared = float(np.unique(vc[:, 1].round(2))[1])
+    de_cara = lambda minimo, maximo: ac[((vc[ac][:, :, 1] >= minimo - 0.01) & (vc[ac][:, :, 1] <= maximo + 0.01)).all(1)]  # noqa: E731
+    ax3 = fig.add_axes([0.02, 0.05, 0.22, 0.28])
+    vista(ax3, vc, de_cara(alto - pared, alto), (0, 2), "Caja · cara superior (Y = 129,5)")
+    ax3b = fig.add_axes([0.26, 0.05, 0.22, 0.28])
+    vista(ax3b, vc, de_cara(0, pared), (0, 2), "Caja · cara inferior (Y = 0)")
     vt2 = vt.copy()
     vt2[:, 2] += 129.5
-    ax4 = fig.add_axes([0.36, 0.05, 0.21, 0.28])
+    ax4 = fig.add_axes([0.51, 0.05, 0.13, 0.28])
     vista(ax4, vt2, at, (0, 1), "Tapa · canto (X-Y)")
-    cota(ax4, (0, 0), (0, vt2[:, 1].max()), -5, f"{vt2[:, 1].max():.1f}", vertical=True)
+    cota(ax4, (0, 0), (0, vt2[:, 1].max()), -9, f"{vt2[:, 1].max():.1f}", vertical=True)
 
     filas = perforaciones(vc, ac)
     nombres = "XYZ"
@@ -151,7 +158,8 @@ def plano(caja, tapa) -> list[dict]:
         a, b = f["otros"]
         forma = f"ø {f['tam'][0]:.1f}" if f["redondo"] else f"{f['tam'][0]:.1f} × {f['tam'][1]:.1f}"
         cx, cy = f["origen"] + f["tam"] / 2
-        celdas.append([str(k), f"Plano {nombres[a]}{nombres[b]}", forma, f"{nombres[a]} {cx:.1f} · {nombres[b]} {cy:.1f}"])
+        cara = "Fondo" if f["eje"] == 2 else ("Superior" if f["nivel"] > vc[:, 1].max() / 2 else "Inferior")
+        celdas.append([str(k), cara, forma, f"{nombres[a]} {cx:.1f} · {nombres[b]} {cy:.1f}"])
     t = ax.table(cellText=celdas, colLabels=["#", "Cara", "Tamaño", "Centro"], loc="upper left", cellLoc="left")
     t.auto_set_font_size(False)
     t.set_fontsize(8.5)
@@ -166,14 +174,14 @@ def plano(caja, tapa) -> list[dict]:
     interior = vc[:, 0].max() - 2 * grosor, vc[:, 1].max() - 2 * grosor
     borde = vt2[:, 0], vt2[:, 2]
     labio = np.unique(vt[:, 0].round(2)), np.unique(vt[:, 2].round(2))
-    ax5 = fig.add_axes([0.60, 0.05, 0.38, 0.30])
+    ax5 = fig.add_axes([0.66, 0.05, 0.33, 0.30])
     ax5.axis("off")
     notas = [f"Pared de la caja: {grosor:.1f} mm",
              f"Cavidad: {interior[0]:.1f} × {interior[1]:.1f} mm",
              f"Labio de la tapa: {labio[0][2] - labio[0][1]:.1f} × {labio[1][2] - labio[1][1]:.1f} mm, 3,0 mm de alto",
              "Holgura nominal labio-cavidad: 0,0 mm",
              "Cierre por encastre del labio; el modelo no tiene agujeros de tornillo"]
-    ax5.text(0, 1, "\n".join(notas), va="top", fontsize=9, color=TINTA, linespacing=1.7)
+    ax5.text(0, 1, "\n".join(notas), va="top", fontsize=8.4, color=TINTA, linespacing=1.7)
     fig.savefig(PLANOS / "ensamble_2d.png", dpi=200, facecolor="white")
     plt.close(fig)
     return filas
