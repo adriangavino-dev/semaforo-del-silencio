@@ -3,8 +3,9 @@
 Lee los datos reales del proyecto y los del prototipo físico, y escribe en
 entrega_semana13/:
 
-    Expediente_Tecnico_PI6002.pdf   entregables A y B
-    Panel_Fotografico_PI6002.pdf    entregable C
+    Informe_Consolidacion_PI6002.pdf  expediente y panel en un solo PDF
+    Expediente_Tecnico_PI6002.pdf     entregables A y B
+    Panel_Fotografico_PI6002.pdf      entregable C
     PENDIENTES.md                   lo que falta, por área
     diagramas/                      arquitectura, FSM, esquemático, arnés
 
@@ -19,7 +20,9 @@ Lo que no tenga dato sale resaltado en amarillo: nada se rellena con supuestos.
 """
 from __future__ import annotations
 
+import csv
 import json
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -44,6 +47,7 @@ RAIZ = AQUI.parent.parent
 sys.path.insert(0, str(RAIZ))
 sys.path.insert(0, str(AQUI))
 import diagramas  # noqa: E402
+import planos  # noqa: E402
 from src import config as cfg  # noqa: E402
 
 SALIDA = RAIZ / "entrega_semana13"
@@ -158,15 +162,14 @@ def seccion_sistema(h: list, m: dict, conf: dict, p: Pendientes) -> None:
     h += [Paragraph(
         "El Semáforo del Silencio mide el ruido del aula y lo muestra con un semáforo de tres colores, para que "
         "docente y alumnos corrijan el ambiente sin interrumpir la clase. Esta etapa cierra el diseño en una unidad "
-        "de un solo bloque que se enciende con un switch y funciona con su batería, sin cable a una computadora.",
-        CUERPO)]
+        "de un solo bloque, con el firmware, los modelos, la carcasa y el tablero integrados.", CUERPO)]
     h += [figura(SALIDA / "diagramas" / "arquitectura.png"),
           Paragraph("Figura 1. Arquitectura final. La línea continua delimita la unidad; la discontinua, la estación "
                     "de análisis.", PIE)]
     h += [Paragraph("Operación según lo que esté disponible", H2)]
     h += [tabla([
         ["Condición", "Comportamiento", "Quién decide el color"],
-        ["Solo la unidad, con su switch", "Mide dB con el INMP441 y enciende el LED. Arranca en segundos aunque no "
+        ["Solo la unidad, con 5 V", "Mide dB con el INMP441 y enciende el LED. Arranca en segundos aunque no "
          "haya Wi-Fi y reintenta la conexión cada 15 s.", "ESP32, por umbrales con histéresis"],
         ["Unidad + laptop en el hotspot", "Suma cámara, clasificación del sonido, detección de eventos, grabación y "
          "tablero.", "Laptop; repite la orden cada 3 s"],
@@ -179,6 +182,13 @@ def seccion_sistema(h: list, m: dict, conf: dict, p: Pendientes) -> None:
         "artificial y la clasificación por tipo de sonido necesitan más cómputo del que ofrece un ESP32 y corren en "
         "una laptop externa conectada por Wi-Fi. La laptop no se usa para depurar y la unidad no depende de ella para "
         "operar; se declara como estación opcional para que el alcance quede explícito.", CUERPO)]
+    al = m["alimentacion"]
+    if not al.get("bateria"):
+        h += [Paragraph("Desviación abierta: alimentación", H2)]
+        h += [Paragraph(
+            f"Hoy la unidad se alimenta por {al['tipo']}. La guía exige una fuente definitiva y arranque con switch sin "
+            f"cable USB a la PC, así que este punto no se cumple todavía. Definición: "
+            f"{p.falta('Definir la fuente definitiva y validarla con el docente', 'fuente definitiva')}.", CUERPO)]
 
 
 def seccion_mecanica(h: list, m: dict, p: Pendientes) -> None:
@@ -206,7 +216,7 @@ def seccion_mecanica(h: list, m: dict, p: Pendientes) -> None:
                                   ("vista_explosionada", "Vista explosionada numerada", "Vista explosionada numerada")):
         ruta = next((planos / f"{nombre}{x}" for x in (".png", ".jpg") if (planos / f"{nombre}{x}").exists()), None)
         if ruta:
-            h += [KeepTogether([figura(ruta, 15.5), Paragraph(titulo, PIE)])]
+            h += [KeepTogether([figura(ruta, 17), Paragraph(titulo, PIE)])]
         else:
             h += [Paragraph(f"{titulo}: {p.falta(texto, 'insertar plano')}", CUERPO)]
 
@@ -215,16 +225,17 @@ def seccion_electronica(h: list, m: dict, conf: dict, p: Pendientes) -> None:
     p.area = "A. Electrónico (Garage)"
     el = m["electronico"]
     pin = diagramas.pines()
-    h += [Paragraph("A.2 Paquete electrónico (Garage)", H2)]
-    h += [figura(SALIDA / "diagramas" / "esquematico.png", 16.2),
-          Paragraph("Figura 2. Esquemático con los pines del firmware. Los valores marcados * deben coincidir con la "
-                    "placa fabricada.", PIE)]
+    h += [KeepTogether([
+        Paragraph("A.2 Paquete electrónico (Garage)", H2),
+        figura(SALIDA / "diagramas" / "esquematico.png", 16.2),
+        Paragraph("Figura 2. Esquemático con los pines del firmware. Los valores marcados * deben coincidir con la "
+                  "placa fabricada.", PIE)])]
     h += [tabla([
         ["Ref.", "Componente", "Valor", "Encapsulado"],
         ["U1", "ESP32 DevKit", "Módulo ESP32-WROOM-32", "Tarjeta de desarrollo con pines"],
         ["U2", "INMP441", "Micrófono I²S, 3,3 V", "Módulo con pines"],
         ["R1–R3", "Resistencias de los LED", "220 Ω, 1/4 W", "Axial"],
-        ["D1–D3", "LED verde, amarillo y rojo", "Corriente de salida ≈ 6 mA con Vf de 2 V", "Confirmar diámetro"],
+        ["D1–D3", "LED verde, amarillo y rojo", "Corriente de salida ≈ 6 mA con Vf de 2 V", "THT 5 mm"],
         ["C1", "Desacople del servo", p.valor(el.get("c1_valor"), "Valor real de C1"), "Radial"],
         ["F1", "Fusible rearmable PPTC", p.valor(el.get("pptc_valor"), "Corriente de sostenimiento de F1"), "Confirmar"],
         ["M1", "Servomotor", p.valor(el.get("servo_modelo"), "Modelo real del servo"), "3 hilos"],
@@ -344,7 +355,13 @@ def seccion_autonomia(h: list, m: dict, p: Pendientes) -> None:
         filas.append([n, cond, coma(teorica[k]),
                       p.valor(v, f"Corriente medida en {n.lower()}"),
                       f"{100 * (v - teorica[k]) / teorica[k]:+.0f} %" if v else "—"])
+    al = m["alimentacion"]
     h += [Paragraph("B.2 Protocolo de autonomía energética", H2)]
+    if not al.get("bateria"):
+        h += [Paragraph(
+            f"<b>No verificable por ahora:</b> la unidad se alimenta por {al['tipo']} y no tiene batería, así que no hay "
+            "autonomía que medir y el criterio del 85 % queda sin cumplir. La tabla sirve para dimensionar la fuente "
+            "definitiva.", CUERPO)]
     h += [Paragraph(
         "Se mide con multímetro en serie con la salida de 5 V, en cada estado, por al menos 60 s. La corriente teórica "
         f"suma el radio en recepción ({CORRIENTE_RX_MA:.0f} mA) o el promedio con {100 * TRAFICO_TX:.0f} % del tiempo "
@@ -355,7 +372,9 @@ def seccion_autonomia(h: list, m: dict, p: Pendientes) -> None:
     h += [Spacer(1, 5)]
     mah, v_bat, ef = a.get("bateria_mah"), a.get("bateria_v"), float(a.get("eficiencia") or 0.85)
     i_ref = (med.get("transmision") or teorica["transmision"])
-    if mah and v_bat:
+    if not al.get("bateria"):
+        pass
+    elif mah and v_bat:
         t_teo = mah * v_bat / 5.0 * ef / i_ref
         t_med = a.get("horas_medidas")
         ratio = 100 * t_med / t_teo if t_med else None
@@ -377,9 +396,8 @@ def seccion_burnin(h: list, m: dict, p: Pendientes) -> None:
     p.area = "B. Burn-in"
     r, png = ultimo_burnin()
     h += [Paragraph("B.3 Ensayo Burn-in de confiabilidad", H2)]
-    h += [Paragraph("La unidad opera en batería sobre la mesa de trabajo, sin intervención. scripts/ensayo_burnin.py "
-                    "consulta al ESP32 cada 5 s; temperatura y tensión se leen con instrumentos y se anotan durante "
-                    "el ensayo.", CUERPO)]
+    h += [Paragraph("La unidad opera sobre la mesa de trabajo, sin intervención. scripts/ensayo_burnin.py consulta al "
+                    "ESP32 cada 5 s; la temperatura interna se lee con termómetro y se anota durante el ensayo.", CUERPO)]
 
     def veredicto(ok):
         if ok is None:
@@ -396,9 +414,11 @@ def seccion_burnin(h: list, m: dict, p: Pendientes) -> None:
          veredicto(c.get("temperatura_45c"))],
         ["Tasa de envío de datos", "≥ 99 %", f"{r['tasa_envio_pct']} %" if r else p.falta("Tasa de envío del ensayo"), veredicto(c.get("tasa_99"))],
         ["Reinicios", "0", str(r["reinicios"]) if r else p.falta("Reinicios durante el ensayo"), veredicto(c.get("sin_reinicios"))],
-        ["Tensión de batería", "Registrada",
-         f"{r['bateria_inicial_v']} → {r['bateria_final_v']} V" if r and r.get("bateria_inicial_v") else p.falta("Tensión inicial y final de la batería"), "—"],
     ]
+    if m["alimentacion"].get("bateria"):
+        filas.append(["Tensión de batería", "Registrada",
+                      f"{r['bateria_inicial_v']} → {r['bateria_final_v']} V" if r and r.get("bateria_inicial_v")
+                      else p.falta("Tensión inicial y final de la batería"), "—"])
     h += [tabla(filas, [5, 3, 6, 3])]
     if png and png.exists():
         h += [Spacer(1, 6), figura(png, 15), Paragraph(f"Registro del ensayo iniciado el {r['inicio']}.", PIE)]
@@ -458,6 +478,100 @@ def seccion_ods(h: list, m: dict, p: Pendientes) -> None:
         ["Peleas en cámara de vigilancia", "150 videos", pct(pe["pelea"]["con_alguna_ventana_anomala"]), "Débil"],
         ["Conteo en aulas muy llenas", "SCUT-HEAD, 500 fotos", pct(v["conteo"]["detectadas_yolo"]), "Débil en auditorios densos"],
     ], [5, 5.6, 2, 4.4])]
+
+
+def grafica_sesion(sesion: Path, conf: dict, salida: Path) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    filas = list(csv.DictReader((sesion / "lecturas_por_segundo.csv").open(encoding="utf-8-sig")))
+    t0 = float(filas[0]["segundo"])
+    x = [(float(f["segundo"]) - t0) / 60 for f in filas]
+    y = [float(f["nivel_db"]) for f in filas]
+    color = {"VERDE": diagramas.VERDE, "AMARILLO": diagramas.AMBAR, "ROJO": diagramas.ROJO}
+    fig, ax = plt.subplots(figsize=(10, 3.2))
+    ini = 0
+    for i in range(1, len(filas) + 1):
+        if i == len(filas) or filas[i]["estado"] != filas[ini]["estado"]:
+            ax.axvspan(x[ini], x[min(i, len(x) - 1)], color=color[filas[ini]["estado"]], alpha=0.22, lw=0)
+            ini = i
+    ax.plot(x, y, color=diagramas.NAVY, lw=0.8)
+    db = conf["audio"]["db"]
+    for valor, nombre in ((db["umbral_amarillo"], "Amarillo"), (db["umbral_rojo"], "Rojo")):
+        ax.axhline(valor, color=diagramas.GRIS, lw=0.8, ls="--")
+        ax.text(x[-1], valor + 1, f"{nombre} {valor} dB", ha="right", fontsize=8, color=diagramas.GRIS)
+    ax.set_xlabel("Minutos de sesión", fontsize=9)
+    ax.set_ylabel("Nivel (dB)", fontsize=9)
+    ax.tick_params(labelsize=8)
+    ax.margins(x=0)
+    for lado in ("top", "right"):
+        ax.spines[lado].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(salida, dpi=200)
+    plt.close(fig)
+
+
+def seccion_prueba(h: list, conf: dict, p: Pendientes) -> None:
+    p.area = "B. Prueba integrada"
+    sesiones = sorted(cfg.ruta_de("sesiones").glob("*/reporte.json"))
+    datos = [json.loads(s.read_text(encoding="utf-8")) for s in sesiones]
+    larga = max(datos, key=lambda r: r["duracion_s"], default=None)
+    if not larga or larga["duracion_s"] < 300:
+        h += [Paragraph("B.5 Prueba integrada del sistema", H2),
+              Paragraph(p.falta("Sesión integrada de al menos 5 minutos"), CUERPO)]
+        return
+    carpeta = cfg.ruta_de("sesiones") / larga["sesion_id"]
+    salida = SALIDA / "diagramas" / "sesion_prueba.png"
+    grafica_sesion(carpeta, conf, salida)
+    e = larga["esp32"]
+    pe, cambios = larga["porcentaje_estados"], larga["cambios_estado"]
+    ordenes = e["enviados"] + e["fallidos"]
+    corta = [r for r in datos if r["sesion_id"] > larga["sesion_id"] and r["esp32"].get("audio_bloques")]
+    filas_csv = list(csv.DictReader((carpeta / "lecturas_por_segundo.csv").open(encoding="utf-8-sig")))
+    validos = [float(f["nivel_db"]) for f in filas_csv if float(f["nivel_db"]) > 0]
+    primera = next(float(f["segundo"]) for f in filas_csv if float(f["nivel_db"]) > 0) - float(filas_csv[0]["segundo"])
+    h += [KeepTogether([
+        Paragraph("B.5 Prueba integrada del sistema", H2),
+        Paragraph(f"Sesión {larga['sesion_id']}, con la cámara TE-9072 y la placa por Wi-Fi doméstico, de "
+                  f"{coma(larga['duracion_s'] / 60)} min. Es una prueba de banco con una persona, no una clase real: "
+                  "valida la integración, no el impacto.", CUERPO),
+        figura(salida, 17),
+        Paragraph("Figura 5. Nivel medido durante la sesión; el fondo muestra el color del semáforo en cada momento.", PIE)])]
+    ruta_foto = next((RAIZ / "sesiones" / c["foto"].split("sesiones/", 1)[1] for c in cambios
+                      if c["a"] == "ROJO" and c.get("foto")), None)
+    filas = [
+        ["Medida", "Resultado"],
+        ["Tiempo por color", f"VERDE {coma(pe['VERDE'])} % · AMARILLO {coma(pe['AMARILLO'])} % · ROJO {coma(pe['ROJO'])} %"],
+        ["Nivel", f"Promedio {coma(sum(validos) / len(validos))} dB · máximo {coma(max(validos))} dB, sin contar los "
+                  f"{coma(primera / 60)} min iniciales sin lecturas"],
+        ["Eventos", f"{larga['eventos']['total']} movimientos anómalos confirmados, con foto"],
+        ["Cambios de color", f"{len(cambios)}, cada uno con foto y causa"],
+        ["Órdenes al ESP32", f"{e['enviados']} de {ordenes} entregadas ({pct(e['enviados'] / ordenes)})"],
+    ]
+    h += [tabla(filas, [4.5, 12.5])]
+    h += [Paragraph("Hallazgos de la prueba", H2)]
+    for texto in (
+        f"<b>El audio no arrancó en esta sesión.</b> El Wi-Fi débil (-80 a -86 dBm) hizo fallar los primeros intentos y "
+        "el programa dejó de reintentar, así que el color se decidió sin clasificar el sonido. Se corrigió para que "
+        "reintente cada 5 s y avise en pantalla." +
+        (f" Una sesión posterior de {coma(corta[0]['duracion_s'])} s clasificó audio con "
+         f"{pct(corta[0]['esp32']['audio_bloques_perdidos'] / (corta[0]['esp32']['audio_bloques'] + corta[0]['esp32']['audio_bloques_perdidos']))} "
+         "de bloques perdidos." if corta else ""),
+        f"<b>La entrega de órdenes ({pct(e['enviados'] / ordenes)}) no alcanza el 99 %.</b> Coincide con la señal débil; "
+        "debe repetirse con el hotspot cerca de la unidad.",
+        f"<b>Los primeros {coma(primera / 60)} min no hubo lecturas de nivel.</b> En ese tramo el AMARILLO vino solo del "
+        "movimiento; hay que confirmar que el tablero esté recibiendo datos antes de empezar.",
+        "<b>Conviene tener el tablero abierto.</b> En la única prueba corta sin él se perdió 36 % del audio, frente a "
+        "1,6–1,7 % con él.",
+    ):
+        h += [Paragraph(texto, VINETA, bulletText="•")]
+    if ruta_foto and ruta_foto.exists():
+        h += [KeepTogether([figura(ruta_foto, 8.5), Paragraph(
+            "Figura 6. Foto tomada por el sistema al pasar a ROJO, con el nivel y la causa registrados.", PIE)])]
+
+
+def seccion_referencias(h: list) -> None:
     h += [Paragraph("Referencias", H2)]
     for r in (
         "Berglund, Lindvall y Schwela (eds.). <i>Guidelines for Community Noise</i>. OMS, 1999.",
@@ -528,6 +642,8 @@ def expediente(m: dict, conf: dict, p: Pendientes) -> Path:
     seccion_autonomia(h, m, p)
     seccion_burnin(h, m, p)
     seccion_ods(h, m, p)
+    seccion_prueba(h, conf, p)
+    seccion_referencias(h)
     pie = Numerado("Semáforo del Silencio · Expediente técnico · PI6002")
     doc.build(h, onFirstPage=pie, onLaterPages=pie)
     return ruta
@@ -631,13 +747,16 @@ def main() -> int:
     for sub in ("fotos", "planos", "cad", "pcb"):
         (SALIDA / sub).mkdir(parents=True, exist_ok=True)
     diagramas.generar(SALIDA / "diagramas")
+    planos.generar()
     conf = cfg.cargar()
     m = yaml.safe_load((AQUI / "mediciones.yaml").read_text(encoding="utf-8"))
     p = Pendientes()
     a = expediente(m, conf, p)
     b = panel(m, p)
     c = escribir_pendientes(p)
-    print(f"{a.name}\n{b.name}\n{c.name}: {sum(len(v) for v in p.lista.values())} pendientes")
+    unido = SALIDA / "Informe_Consolidacion_PI6002.pdf"
+    subprocess.run([shutil.which("pdfunite") or "pdfunite", a.name, b.name, unido.name], cwd=SALIDA, check=True)
+    print(f"{unido.name}\n{a.name}\n{b.name}\n{c.name}: {sum(len(v) for v in p.lista.values())} pendientes")
     return 0
 
 

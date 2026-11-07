@@ -609,6 +609,15 @@ if (!window.DATOS_EMBEBIDOS) setInterval(pintarEsp32, 3000);
 // aparece una nueva.
 if (!window.DATOS_EMBEBIDOS) {
   const huella = (r) => r ? `${r.sesion_id}|${r.duracion_s}|${r.eventos?.total}|${(r.cambios_estado||[]).length}|${r.estado_final}` : "";
+  const pedida = new URLSearchParams(location.search).get("sesion");
+  const abierta = REPORTES.find((r) => r.sesion_id === pedida);
+  if (abierta) {
+    $("sel-salon").value = abierta.salon;
+    refrescarSesiones();
+    $("sel-sesion").value = pedida;
+    pintar(abierta, REPORTES.filter((r) => r.salon === abierta.salon));
+  }
+
   setInterval(async () => {
     const nuevos = await cargar();
     if (!nuevos || !nuevos.length) return;

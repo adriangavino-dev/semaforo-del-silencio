@@ -78,13 +78,13 @@ def arquitectura(carpeta: Path) -> None:
     # Unidad monolítica
     ax.add_patch(Rectangle((0.15, 0.3), 5.55, 6.55, fc=PANEL, ec=NAVY, lw=1.8))
     ax.text(2.92, 6.62, "UNIDAD MONOLÍTICA", ha="center", fontsize=11.5, fontweight="bold", color=NAVY)
-    ax.text(2.92, 6.34, "Funciona sola con su switch: mide, decide y muestra", ha="center", fontsize=8.8, color=GRIS)
+    ax.text(2.92, 6.34, "Con 5 V funciona sola: mide, decide y muestra", ha="center", fontsize=8.8, color=GRIS)
     caja(ax, 1.75, 2.75, 2.35, 2.0, "ESP32", "Tarea audio/LED/servo\nTarea red (núcleo 0)\nControl propio por dB\nServidor HTTP :80",
          fondo=NAVY, borde=NAVY, color="white", tam=11.5)
     ax.texts[-1].set_color("#C9D6E3")
     caja(ax, 0.4, 5.15, 1.75, 0.95, "INMP441", "Micrófono I²S")
     caja(ax, 3.75, 5.15, 1.75, 0.95, "Servo", "3 posiciones")
-    caja(ax, 0.4, 1.0, 1.75, 1.1, "Batería", "Switch maestro\n+ PPTC")
+    caja(ax, 0.4, 1.0, 1.75, 1.1, "Fuente 5 V", "Hoy: USB de la laptop\nDefinitiva: por definir")
     caja(ax, 3.75, 1.0, 1.75, 1.1, "Semáforo", "LED V / A / R")
     flecha(ax, (1.45, 5.15), (2.2, 4.75), texto="I²S", ptexto=(1.45, 4.86))
     flecha(ax, (3.65, 4.75), (4.45, 5.15), texto="PWM", ptexto=(4.45, 4.86))
@@ -229,7 +229,7 @@ def esquematico(carpeta: Path) -> None:
     ax.plot([1.45, 12.2], [yr, yr], color=ROJO, lw=2)
     ax.text(12.25, yr, "5 V", va="center", color=ROJO, fontweight="bold")
     ax.add_patch(Rectangle((0.5, yr - 0.32), 0.95, 0.64, fc="white", ec=TINTA, lw=1.3, zorder=3))
-    ax.text(0.97, yr, "BT1\nBatería", ha="center", va="center", fontsize=7.8, zorder=4)
+    ax.text(0.97, yr, "J1\nFuente 5 V", ha="center", va="center", fontsize=7.2, zorder=4)
     ax.add_patch(Rectangle((1.75, yr - 0.14), 0.75, 0.28, fc="white", ec=TINTA, lw=1.3, zorder=3))
     ax.text(2.12, yr + 0.3, "F1 PPTC *", ha="center", fontsize=8.2)
     ax.plot([2.95, 3.5], [yr, yr], color="white", lw=4, zorder=3)
@@ -270,7 +270,7 @@ def arnes(carpeta: Path) -> None:
     ax.add_patch(Rectangle((4.9, 0.55), 3.2, 4.3, fc=PANEL, ec=NAVY, lw=1.6))
     ax.text(6.5, 4.5, "Placa principal", ha="center", fontweight="bold", color=NAVY, fontsize=11)
     ax.text(6.5, 4.2, "con ESP32 DevKit", ha="center", color=GRIS, fontsize=9)
-    izq = [("J1", "Batería", "2 vías · PPTC + switch", 3.3, [("5 V", ROJO), ("GND", TINTA)]),
+    izq = [("J1", "Fuente 5 V", "2 vías · PPTC + switch", 3.3, [("5 V", ROJO), ("GND", TINTA)]),
            ("J2", "INMP441", "5 vías · corto, trenzado", 1.45, [("SD", AZUL), ("SCK", "#7A5AF8"), ("WS", "#0E9384"),
                                                                  ("3V3", ROJO), ("GND", TINTA)])]
     der = [("J3", "Semáforo", "4 vías · LED + retorno", 3.3, [(f"D{p['PIN_LED_VERDE']}", VERDE), (f"D{p['PIN_LED_AMARILLO']}", AMBAR),

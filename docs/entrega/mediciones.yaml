@@ -9,16 +9,21 @@ equipo:
   nombre: null          # nombre del equipo
   integrantes: []       # ["Nombre Apellido", ...]
 
+# Cómo se alimenta la unidad hoy. bateria: true activa el protocolo de autonomía.
+alimentacion:
+  tipo: "USB 5 V desde la laptop"
+  bateria: false
+
 mecanico:
   material: null        # p. ej. PETG, acrílico 3 mm
   proceso: null         # impresión FDM, corte láser
-  dimensiones_mm: null  # "L x A x H"
+  dimensiones_mm: "Caja 90,5 × 129,5 × 51,4; tapa 90,5 × 129,5 × 5,5"  # medido del 3MF
   masa_g: null
   holgura_mm: null      # medida con galga; criterio ≤ 0.5
-  fijacion: null        # tornillería o encastre usado
+  fijacion: "Encastre por labio de 3 mm en la tapa (según el modelo)"  # confirmar en la pieza real
   software_cad: null    # Fusion 360 / SolidWorks
   # Exportados del CAD del equipo. Copiarlos a entrega_semana13/cad/
-  archivos: {step: null, stl: null, dxf: null}
+  archivos: {step: null, stl: "caja_final.stl, tapa_final.stl", dxf: null}
 
 electronico:
   tipo_placa: null      # PCB fabricada o placa perforada
@@ -40,7 +45,7 @@ bom:
   - {item: "ESP32 DevKit (módulo WROOM-32, USB-UART CP2102)", espec: "Wi-Fi 2,4 GHz, 240 MHz, 5 V por VIN", fabricante: null, cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
   - {item: "Micrófono I²S INMP441", espec: "MEMS digital, 3,3 V", fabricante: null, cantidad: 1, precio: 20.00, fuente: "referencial Naylamp"}
   - {item: "Servomotor", espec: "Confirmar modelo; 5 V", fabricante: null, cantidad: 1, precio: 10.00, fuente: "referencial Naylamp (SG90)"}
-  - {item: "LED verde / amarillo / rojo", espec: "Confirmar diámetro y brillo", fabricante: null, cantidad: 3, precio: null, fuente: null}
+  - {item: "LED verde / amarillo / rojo", espec: "THT 5 mm", fabricante: null, cantidad: 3, precio: null, fuente: null}
   - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: null, cantidad: 3, precio: null, fuente: null}
   - {item: "Condensador electrolítico", espec: "470 µF, ≥ 10 V", fabricante: null, cantidad: 1, precio: null, fuente: null}
   - {item: "Fusible PPTC", espec: "Confirmar corriente", fabricante: null, cantidad: 1, precio: null, fuente: null}
@@ -70,7 +75,7 @@ burnin:
 mvis:
   - {interfaz: "Mecánica ↔ Electrónica", criterio: "Placa fija sin flexión; 0 interferencias entre componentes y envolvente; puertos accesibles", evidencia: null, estado: null}
   - {interfaz: "Electrónica ↔ Software", criterio: "Pines del firmware iguales al cableado: autotest de LED 3/3, servo 3/3, micrófono con señal", evidencia: "Medido en banco por USB: LED 3/3, servo 3/3 (30°/90°/150°), micrófono 35 → 57 dB al hablar. Falta repetir en la unidad final por Wi-Fi.", estado: "parcial"}
-  - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Placa real por Wi-Fi doméstico (-84 dBm), prueba de 14 s: orden de color en 64-78 ms, telemetría 14/14, audio 1,7 % de bloques perdidos, servo 2/2. Falta repetir en el hotspot durante el Burn-in.", estado: "parcial"}
+  - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Placa real, Wi-Fi doméstico de -80 a -86 dBm. Prueba de 14 s: color en 64-78 ms, telemetría 14/14, audio 1,7 % perdido. Sesión de 18,6 min: 83,7 % de órdenes entregadas, por debajo del criterio; hay que repetir con señal fuerte.", estado: "parcial"}
   - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: null, estado: null}
   - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: null, estado: null}
   - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: null, estado: null}
@@ -92,6 +97,6 @@ pies_de_foto:
   "3.1": "Arnés interno ordenado con precintos, conectores con traba y aislamiento termocontraíble."
   "3.2": "Placa y batería fijadas a la envolvente, con fusible en la línea de alimentación."
   "4.1": "Arranque autónomo con el switch: el semáforo enciende y se conecta sin cable USB a la PC."
-  "4.2": "Tablero en tiempo real con la telemetría que llega de la unidad por Wi-Fi."
+  "4.2": "Tablero con la sesión real del 6 de noviembre: estados, niveles, eventos y fotos por cambio de color."
   "5.1": "Unidad levantada con una mano: bloque rígido, sin juego interno."
   "5.2": "Unidad operando sobre la mesa durante el ensayo Burn-in."
