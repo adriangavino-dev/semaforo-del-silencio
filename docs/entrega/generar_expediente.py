@@ -659,8 +659,6 @@ PANEL_SEC = [
      [("3.1", "Arreglo de arnés interno"), ("3.2", "Fijación de PCB y batería")]),
     ("4", "Pilar Software (Computación)", "Arranque automático sin cable USB a PC; telemetría continua y KPIs en gráficos.",
      [("4.1", "Encendido autónomo por switch"), ("4.2", "Dashboard en línea en tiempo real")]),
-    ("5", "Pruebas estructurales", "Rigidez monolítica con 0 mm de juego interno y operación ininterrumpida sobre la mesa.",
-     [("5.1", "Prueba de elevación (una mano)"), ("5.2", "Prototipo durante el ensayo Burn-in")]),
 ]
 
 
@@ -726,7 +724,7 @@ def panel(m: dict, p: Pendientes) -> Path:
         c.setFont("Sans-B", 14.5)
         c.drawString(mx, H - 1.08 * cm, f"{num_sec}. {titulo}")
         c.setFont("Sans", 8)
-        c.drawRightString(W - mx, H - 1.03 * cm, f"Semáforo del Silencio · PI6002 · Panel fotográfico · {num_sec}/5")
+        c.drawRightString(W - mx, H - 1.03 * cm, f"Semáforo del Silencio · PI6002 · Panel fotográfico · {num_sec}/{len(PANEL_SEC)}")
         c.setFillColor(GRIS)
         c.setFont("Sans-I", 8.6)
         c.drawString(mx, H - 2.3 * cm, f"Criterio técnico: {criterio}")
