@@ -464,8 +464,8 @@ sesiones/
   estado; un clic la abre en grande.
 - **Video y audio** (`src/fusion/grabacion.py`): solo con cámara en vivo. El
   video se graba a FPS fijos (repite cuadros si el análisis va más lento), así
-  que dura lo mismo que la sesión. Tamaño aproximado: video 3–5 MB/min, audio
-  1,9 MB/min; una clase de 45 min ocupa ~250–300 MB.
+  que dura lo mismo que la sesión. Tamaño medido: video 10–14 MB/min, audio
+  1,9 MB/min; una clase de 45 min ocupa ~550–750 MB.
 - Todo se apaga o ajusta en `grabacion` (`config.yaml`): `video`, `audio`,
   `fotos.al_evento`, `fotos.al_cambio_estado`, `fotos.max_por_sesion` y
   `fotos.difuminar_caras` (pixela las caras, por si algún salón no lo autoriza).

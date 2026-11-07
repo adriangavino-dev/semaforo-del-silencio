@@ -87,15 +87,29 @@ class HiloAudio(threading.Thread):
     def run(self) -> None:
         try:
             self.clf.cargar(obligatorio=False)
-            self.captura.iniciar()
             with self._lock:
-                self.listo = True
                 self.con_modelo = self.clf.disponible
         except Exception as exc:  # noqa: BLE001
             with self._lock:
                 self.error = str(exc)
-            print(f"[audio] error de inicialización: {exc}", file=sys.stderr)
+            print(f"[audio] error al cargar el modelo: {exc}", file=sys.stderr)
             return
+
+        # Con Wi-Fi débil el primer intento puede fallar. Una sesión dura horas:
+        # se sigue intentando, porque rendirse aquí la deja entera sin audio.
+        while not self._detener.is_set():
+            try:
+                self.captura.iniciar()
+                with self._lock:
+                    self.listo = True
+                    self.error = None
+                print("[audio] micrófono en marcha")
+                break
+            except Exception as exc:  # noqa: BLE001
+                with self._lock:
+                    self.error = str(exc)
+                print(f"[audio] sin micrófono, reintento en 5 s: {exc}", file=sys.stderr)
+                self._detener.wait(5.0)
 
         while not self._detener.is_set():
             bloque = self.captura.leer(timeout=0.5)
@@ -419,6 +433,7 @@ def main() -> int:
     def extra_reporte() -> dict:
         return {
             "modelo_audio_entrenado": bool(hilo and hilo.con_modelo),
+            "audio_en_marcha": bool(hilo and hilo.listo),
             "linea_base_calibrada": base.ajustada,
             "fuente": f"video: {Path(args.video).name}" if desde_archivo else f"camara {indice}",
             "audio_disponible": hilo is not None or (fuente_audio == "esp32" and not desde_archivo),
@@ -631,10 +646,13 @@ def main() -> int:
                 etiquetar_personas(frame, vision)
                 de_pie = "n/d" if vision["n_de_pie"] is None else str(vision["n_de_pie"])
                 if hilo:
-                    estado_audio = (
-                        audio["clase"] if hilo.con_modelo
-                        else ("sin modelo entrenado" if hilo.listo else "cargando...")
-                    )
+                    if hilo.error:
+                        estado_audio = "SIN MICROFONO"   # que se vea: si no, pasa inadvertido
+                    else:
+                        estado_audio = (
+                            audio["clase"] if hilo.con_modelo and hilo.listo
+                            else ("sin modelo entrenado" if hilo.listo else "cargando...")
+                        )
                 else:
                     estado_audio = "ESP32" if audio.get("fuente") == "esp32" else "sin audio"
                     if audio.get("caducada"):

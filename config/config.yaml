@@ -72,7 +72,7 @@ grabacion:
   # --- run_session.py. Autorizado: los padres están informados. Cada sesión
   # tiene su carpeta, sesiones/<fecha>_sesion_<n>/ (ej. sesiones/2026-11-02_sesion_01/),
   # con el reporte, los CSV, las fotos, el video y el audio.
-  video: true # video.mp4 de la cámara (solo cámara en vivo), ~3-5 MB por minuto (una clase de 45 min ≈ 150-220 MB)
+  video: true # video.mp4 de la cámara (solo cámara en vivo), ~10-14 MB por minuto, medido (una clase de 45 min ≈ 450-650 MB)
   audio: true # audio.wav del micrófono del aula, ~1.9 MB por minuto
   fotos:
     habilitado: true
@@ -83,7 +83,7 @@ grabacion:
 
 # ---------------------------------------------------------------- VISIÓN
 vision:
-  camara_index: 1 # cámara externa (ver cuál es con: python -m src.vision.pose --camara N)
+  camara_index: 2 # TE-9072 (USB). Ver los números con: python scripts/listar_camaras.py
   ancho: 640
   alto: 480
   fps_objetivo: 15
