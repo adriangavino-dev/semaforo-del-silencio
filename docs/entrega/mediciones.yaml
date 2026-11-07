@@ -42,19 +42,19 @@ logico:
 # Precio unitario en soles. Los que traen "referencial" son de tienda: cámbialos
 # por lo que pagaron. fabricante/precio en null salen como pendientes.
 bom:
-  - {item: "ESP32 DevKit (módulo WROOM-32, USB-UART CP2102)", espec: "Wi-Fi 2,4 GHz, 240 MHz, 5 V por VIN", fabricante: null, cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
-  - {item: "Micrófono I²S INMP441", espec: "MEMS digital, 3,3 V", fabricante: null, cantidad: 1, precio: 20.00, fuente: "referencial Naylamp"}
-  - {item: "Servomotor", espec: "Confirmar modelo; 5 V", fabricante: null, cantidad: 1, precio: 10.00, fuente: "referencial Naylamp (SG90)"}
-  - {item: "LED verde / amarillo / rojo", espec: "THT 5 mm", fabricante: null, cantidad: 3, precio: null, fuente: null}
-  - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: null, cantidad: 3, precio: null, fuente: null}
-  - {item: "Condensador electrolítico", espec: "470 µF, ≥ 10 V", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Fusible PPTC", espec: "Confirmar corriente", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Batería", espec: "Confirmar tipo y capacidad", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Switch maestro", espec: "Confirmar modelo", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Placa (PCB o perforada)", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Conectores con traba", espec: "J1 a J4", fabricante: null, cantidad: 4, precio: null, fuente: null}
-  - {item: "Envolvente y material de fabricación", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
-  - {item: "Tornillería y precintos", espec: "Confirmar", fabricante: null, cantidad: 1, precio: null, fuente: null}
+  - {item: "ESP32 DevKit (módulo WROOM-32, USB-UART CP2102)", espec: "Wi-Fi 2,4 GHz, 240 MHz, 5 V por VIN", fabricante: "Desconocido", cantidad: 1, precio: 35.00, fuente: "referencial Naylamp"}
+  - {item: "Micrófono I²S INMP441", espec: "MEMS digital, 3,3 V", fabricante: "Desconocido", cantidad: 1, precio: 20.00, fuente: "referencial Naylamp"}
+  - {item: "Servomotor SG90", espec: "Micro servo, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 10.00, fuente: "referencial Naylamp"}
+  - {item: "LED verde / amarillo / rojo", espec: "THT 5 mm", fabricante: "Desconocido", cantidad: 3, precio: 0.40, fuente: "referencial Naylamp"}
+  - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: "Desconocido", cantidad: 3, precio: 0.10, fuente: "estimado"}
+  - {item: "Condensador electrolítico", espec: "470 µF, ≥ 10 V", fabricante: "Desconocido", cantidad: 1, precio: 1.00, fuente: "estimado"}
+  - {item: "Fusible PPTC", espec: "Rearmable, 1,1 A", fabricante: "Desconocido", cantidad: 1, precio: 2.00, fuente: "estimado"}
+  - {item: "Cable USB de alimentación", espec: "Micro USB, 1 m, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 13.90, fuente: "referencial Falabella"}
+  - {item: "Switch maestro", espec: "Interruptor de 2 posiciones", fabricante: "Desconocido", cantidad: 1, precio: 2.50, fuente: "estimado"}
+  - {item: "Placa perforada", espec: "7 × 9 cm", fabricante: "Desconocido", cantidad: 1, precio: 3.50, fuente: "estimado"}
+  - {item: "Conectores con traba", espec: "JST-XH, J1 a J4", fabricante: "Desconocido", cantidad: 4, precio: 1.00, fuente: "estimado"}
+  - {item: "Envolvente impresa en 3D", espec: "PLA, ≈ 176 g (142 cm³ del modelo)", fabricante: "Fabricación propia", cantidad: 1, precio: 15.00, fuente: "estimado, S/. 85 por kg"}
+  - {item: "Tornillería y precintos", espec: "Lote de ensamble", fabricante: "Desconocido", cantidad: 1, precio: 5.00, fuente: "estimado"}
 
 # Autonomía: medir con multímetro en serie con la salida de la batería, a 5 V.
 autonomia:

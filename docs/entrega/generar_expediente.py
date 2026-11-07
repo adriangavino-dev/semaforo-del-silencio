@@ -320,8 +320,8 @@ def seccion_bom(h: list, m: dict, p: Pendientes) -> None:
     h += [KeepTogether([
         Paragraph("A.4 Presupuesto de materiales (BOM)", H2),
         tabla(filas, [0.7, 4.6, 3.7, 2.2, 1.3, 2.7, 1.8]),
-        Paragraph("Los precios marcados «referencial» son de tienda (Naylamp Mechatronics, consulta de noviembre de 2026) y "
-                  "deben reemplazarse por el costo real. La laptop y el celular no integran la unidad y no se costean.", PIE)])]
+        Paragraph("«Referencial»: precio de tienda consultado en noviembre de 2026. «Estimado»: valor de mercado supuesto, sin "
+                  "comprobante de compra. La laptop y el celular no integran la unidad y no se costean.", PIE)])]
 
 
 def seccion_mvis(h: list, m: dict, p: Pendientes) -> None:
