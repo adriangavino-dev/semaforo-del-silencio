@@ -2,6 +2,8 @@
 
 UTEC · Proyectos Interdisciplinarios II (PI6002) · Ciclo 2026-2
 
+**Material del proyecto en Google Drive:** [abrir carpeta](https://drive.google.com/drive/folders/1allJJY0jx6BqAL42P47V3montcQTqIzw?usp=sharing)
+
 Implementación del subsistema de IA que corre en la laptop: captura audio y video
 del aula, clasifica el tipo de sonido, detecta movimientos anómalos y genera el
 reporte de sesión. El resultado se envía por Wi-Fi al ESP32, que controla los LED.
