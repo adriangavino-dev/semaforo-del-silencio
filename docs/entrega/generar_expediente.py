@@ -668,11 +668,23 @@ def preparar_fotos() -> None:
     """Saca las fotos del panel de las originales: de una sola salen varios encuadres."""
     carpeta = SALIDA / "fotos"
     recortes = {  # original -> {foto del panel: (x0, y0, x1, y1) en fracción, o None para entera}
-        "antes_placa": {"1_1": None},
         "cerrada": {"1_2": None, "2_2": (0.25, 0.33, 0.50, 0.55)},
-        "interior": {"2_1": None, "3_1": (0.18, 0.13, 0.78, 0.72), "3_2": (0.16, 0.54, 0.42, 0.88),
+        "interior": {"2_1": None, "3_1": (0.18, 0.13, 0.78, 0.72), "3_2": (0.14, 0.50, 0.46, 0.90),
                      "4_1": (0.37, 0.64, 0.78, 0.88)},
     }
+    # El "antes" reúne en una sola foto las piezas de la primera versión.
+    antes = [("antes_caja", (0.25, 0.37, 0.78, 0.74)), ("antes_caja_interior", (0.18, 0.30, 0.68, 0.67)),
+             ("antes_placa", (0.14, 0.38, 0.67, 0.75)), ("antes_soldadura", (0.14, 0.30, 0.71, 0.70))]
+    if all((carpeta / f"{n}.jpg").exists() for n, _ in antes):
+        lado = (640, 600)
+        hoja = ImagenPIL.new("RGB", (2 * lado[0] + 12, 2 * lado[1] + 12), "white")
+        for i, (nombre, caja) in enumerate(antes):
+            with ImagenPIL.open(carpeta / f"{nombre}.jpg") as im:
+                im = ImageOps.exif_transpose(im).convert("RGB")
+                w, h = im.size
+                parte = im.crop((int(caja[0] * w), int(caja[1] * h), int(caja[2] * w), int(caja[3] * h)))
+                hoja.paste(ImageOps.fit(parte, lado), ((i % 2) * (lado[0] + 12), (i // 2) * (lado[1] + 12)))
+        hoja.save(carpeta / "1_1.jpg", quality=94)
     for original, salidas in recortes.items():
         ruta = next((carpeta / f"{original}{x}" for x in (".jpg", ".jpeg", ".png") if (carpeta / f"{original}{x}").exists()), None)
         if ruta is None:

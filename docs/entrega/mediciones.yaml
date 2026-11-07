@@ -96,13 +96,13 @@ kpi:
 
 # Texto de cada foto del panel. Ajústalo a lo que muestre la foto real.
 pies_de_foto:
-  "1.1": "Primera versión: LED y resistencias sobre placa perforada, con caja blanca de prueba."
+  "1.1": "Primera versión: caja blanca de prueba y placa de LED, por delante y por detrás con la soldadura quemada."
   "1.2": "Unidad final en caja azul impresa en PLA, con el semáforo al frente y el micrófono por cable plano."
   "2.1": "Interior de la envolvente: placa atornillada a la caja, sin adhesivos ni cintas."
   "2.2": "LED del semáforo alineados en los agujeros de ø5 mm de la caja."
   "3.1": "Cableado interno sobre la placa perforada, con conectores para el micrófono y el servo."
   "3.2": "ESP32 montado en la placa, con su puerto USB-C alineado al borde de la caja."
   "4.1": "Módulo de alimentación ELEGOO con interruptor: la unidad arranca con cargador USB de 5 V, sin PC."
-  "4.2": "Tablero en vivo durante la sesión del 6/11, en AMARILLO, junto a la unidad. Fotograma de video."
+  "4.2": "Tablero con la sesión del 6/11: tiempo por color, niveles, eventos y cambios de estado."
   "5.1": "Unidad levantada con una mano: bloque rígido, sin juego interno."
   "5.2": "Unidad operando sobre la mesa durante el ensayo Burn-in."
