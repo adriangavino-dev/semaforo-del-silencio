@@ -70,7 +70,7 @@ burnin:
 mvis:
   - {interfaz: "Mecánica ↔ Electrónica", criterio: "Placa fija sin flexión; 0 interferencias entre componentes y envolvente; puertos accesibles", evidencia: null, estado: null}
   - {interfaz: "Electrónica ↔ Software", criterio: "Pines del firmware iguales al cableado: autotest de LED 3/3, servo 3/3, micrófono con señal", evidencia: "Medido en banco por USB: LED 3/3, servo 3/3 (30°/90°/150°), micrófono 35 → 57 dB al hablar. Falta repetir en la unidad final por Wi-Fi.", estado: "parcial"}
-  - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Protocolo probado contra el simulador: 266 bloques de audio, 0 perdidos. Falta medir con la placa real en el hotspot.", estado: "parcial"}
+  - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Placa real por Wi-Fi doméstico (-84 dBm), prueba de 14 s: orden de color en 64-78 ms, telemetría 14/14, audio 1,7 % de bloques perdidos, servo 2/2. Falta repetir en el hotspot durante el Burn-in.", estado: "parcial"}
   - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: null, estado: null}
   - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: null, estado: null}
   - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: null, estado: null}
