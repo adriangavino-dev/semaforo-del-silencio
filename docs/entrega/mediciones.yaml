@@ -6,7 +6,7 @@
 # Nada se inventa: un dato vacío se queda vacío.
 
 equipo:
-  nombre: null          # opcional: si queda vacío, la fila no sale en la portada
+  nombre: "Semáforo del Silencio"
   integrantes:
     - {nombre: "Daniel David Vasquez Sayra", codigo: "PREMT01016"}
     - {nombre: "Daniel Matias Yarango Romero", codigo: "20261PREMT01201"}
@@ -20,10 +20,10 @@ alimentacion:
   bateria: false
 
 mecanico:
-  material: null        # p. ej. PETG, acrílico 3 mm
-  proceso: null         # impresión FDM, corte láser
+  material: "PLA"
+  proceso: "Impresión 3D FDM"
   dimensiones_mm: "Caja 90,5 × 129,5 × 51,4; tapa 90,5 × 129,5 × 5,5"  # medido del 3MF
-  masa_g: null
+  masa_g: 1100
   holgura_mm: null      # medida con galga; criterio ≤ 0.5
   fijacion: "Encastre por labio de 3 mm en la tapa (según el modelo)"  # confirmar en la pieza real
   software_cad: null    # Fusion 360 / SolidWorks
