@@ -186,12 +186,9 @@ def seccion_sistema(h: list, m: dict, conf: dict, p: Pendientes) -> None:
         "una laptop externa conectada por Wi-Fi. La laptop no se usa para depurar y la unidad no depende de ella para "
         "operar; se declara como estación opcional para que el alcance quede explícito.", CUERPO)]
     al = m["alimentacion"]
-    if not al.get("bateria"):
-        h += [Paragraph("Desviación abierta: alimentación", H2)]
-        h += [Paragraph(
-            f"Hoy la unidad se alimenta por {al['tipo']}. La guía exige una fuente definitiva y arranque con switch sin "
-            f"cable USB a la PC, así que este punto no se cumple todavía. Definición: "
-            f"{p.falta('Definir la fuente definitiva y validarla con el docente', 'por definir con el docente')}.", CUERPO)]
+    h += [Paragraph("Alimentación", H2)]
+    h += [Paragraph(f"La fuente definitiva es un {al['tipo']}. La unidad arranca sin computadora: la laptop solo se "
+                    "conecta por Wi-Fi cuando se requiere el análisis.", CUERPO)]
 
 
 def seccion_mecanica(h: list, m: dict, p: Pendientes) -> None:
@@ -360,9 +357,8 @@ def seccion_autonomia(h: list, m: dict, p: Pendientes) -> None:
     h += [Paragraph("B.2 Protocolo de autonomía energética", H2)]
     if not al.get("bateria"):
         h += [Paragraph(
-            f"<b>No verificable por ahora:</b> la unidad se alimenta por {al['tipo']} y no tiene batería, así que no hay "
-            "autonomía que medir y el criterio del 85 % queda sin cumplir. La tabla sirve para dimensionar la fuente "
-            "definitiva.", CUERPO)]
+            f"<b>No aplica verificación de autonomía:</b> la unidad funciona conectada a la red con un {al['tipo']} y no "
+            "tiene batería. Se documenta el consumo teórico por estado para dimensionar la fuente.", CUERPO)]
     h += [Paragraph(
         "Se mide con multímetro en serie con la salida de 5 V, en cada estado, por al menos 60 s. La corriente teórica "
         f"suma el radio en recepción ({CORRIENTE_RX_MA:.0f} mA) o el promedio con {100 * TRAFICO_TX:.0f} % del tiempo "

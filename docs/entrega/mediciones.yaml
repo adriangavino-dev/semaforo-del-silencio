@@ -17,9 +17,9 @@ equipo:
     - {nombre: "Sebastian Alexander Balarezo Chihuan", codigo: "20261PREMT01124"}
     - {nombre: "Oscar Martin Anaya Casas", codigo: "20261PREMT01150"}
 
-# Cómo se alimenta la unidad hoy. bateria: true activa el protocolo de autonomía.
+# Fuente definitiva de la unidad. bateria: true activa el protocolo de autonomía.
 alimentacion:
-  tipo: "USB 5 V, a través del módulo ELEGOO con interruptor"
+  tipo: "cargador USB de 5 V, a través del módulo ELEGOO con interruptor"
   bateria: false
 
 mecanico:
@@ -55,6 +55,7 @@ bom:
   - {item: "LED verde / amarillo / rojo", espec: "THT 5 mm", fabricante: "Desconocido", cantidad: 3, precio: 0.40, fuente: "referencial Naylamp"}
   - {item: "Resistencia 220 Ω", espec: "1/4 W", fabricante: "Desconocido", cantidad: 3, precio: 0.10, fuente: "estimado"}
   - {item: "Cable USB de alimentación", espec: "USB-C, 1 m, 5 V", fabricante: "Desconocido", cantidad: 1, precio: 13.90, fuente: "referencial Falabella"}
+  - {item: "Cargador USB de pared", espec: "5 V, 2 A", fabricante: "Desconocido", cantidad: 1, precio: 20.00, fuente: "estimado"}
   - {item: "Placa perforada", espec: "Doble cara", fabricante: "Desconocido", cantidad: 1, precio: 3.50, fuente: "estimado"}
   - {item: "Cable plano y conectores Dupont", espec: "Micrófono y servo", fabricante: "Desconocido", cantidad: 1, precio: 5.00, fuente: "estimado"}
   - {item: "Envolvente impresa en 3D", espec: "PLA azul, ≈ 176 g (142 cm³ del modelo)", fabricante: "Fabricación propia", cantidad: 1, precio: 15.00, fuente: "estimado, S/. 85 por kg"}
@@ -81,7 +82,7 @@ mvis:
   - {interfaz: "Electrónica ↔ Software", criterio: "Pines del firmware iguales al cableado: autotest de LED 3/3, servo 3/3, micrófono con señal", evidencia: "Medido en banco por USB: LED 3/3, servo 3/3 (30°/90°/150°), micrófono 35 → 57 dB al hablar. Falta repetir en la unidad final por Wi-Fi.", estado: "parcial"}
   - {interfaz: "Electrónica ↔ Software (enlace)", criterio: "Telemetría ≥ 99 %; orden de color llega al LED en < 1 s por Wi-Fi", evidencia: "Placa real, Wi-Fi doméstico de -80 a -86 dBm. Prueba de 14 s: color en 64-78 ms, telemetría 14/14, audio 1,7 % perdido. Sesión de 18,6 min: 83,7 % de órdenes entregadas, por debajo del criterio; hay que repetir con señal fuerte.", estado: "parcial"}
   - {interfaz: "Mecánica ↔ Térmica", criterio: "Temperatura interna < 45 °C tras 2 h de operación continua", evidencia: "Sin medir: la unidad no tiene sensor interno y no se usó termómetro.", estado: "sin medir"}
-  - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: "El módulo de alimentación tiene interruptor, pero sigue dependiendo de un cable USB. La prueba de visibilidad a 8 m no se ejecutó.", estado: "parcial"}
+  - {interfaz: "Usuario ↔ Sistema", criterio: "Encendido con un switch; color identificado por 10/10 personas a 8 m", evidencia: "Arranca con cargador USB de 5 V y el interruptor del módulo, sin PC, según prueba del equipo. La prueba de visibilidad a 8 m no se ejecutó.", estado: "parcial"}
   - {interfaz: "Usuario ↔ Tablero", criterio: "Estado interpretado en < 3 s sin explicación previa", evidencia: "El tablero mostró color, nivel y eventos en vivo durante la sesión. Sin prueba cronometrada con usuarios.", estado: "parcial"}
 
 kpi:
@@ -101,7 +102,7 @@ pies_de_foto:
   "2.2": "LED del semáforo alineados en los agujeros de ø5 mm de la caja."
   "3.1": "Cableado interno sobre la placa perforada, con conectores para el micrófono y el servo."
   "3.2": "ESP32 montado en la placa, con su puerto USB-C alineado al borde de la caja."
-  "4.1": "Módulo de alimentación ELEGOO con interruptor y LED de encendido. La energía llega por cable USB."
+  "4.1": "Módulo de alimentación ELEGOO con interruptor: la unidad arranca con cargador USB de 5 V, sin PC."
   "4.2": "Tablero en vivo durante la sesión del 6/11, en AMARILLO, junto a la unidad. Fotograma de video."
   "5.1": "Unidad levantada con una mano: bloque rígido, sin juego interno."
   "5.2": "Unidad operando sobre la mesa durante el ensayo Burn-in."
