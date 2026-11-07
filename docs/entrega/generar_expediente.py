@@ -538,8 +538,6 @@ def seccion_prueba(h: list, conf: dict, p: Pendientes) -> None:
                   "valida la integración, no el impacto.", CUERPO),
         figura(salida, 17),
         Paragraph("Figura 5. Nivel medido durante la sesión; el fondo muestra el color del semáforo en cada momento.", PIE)])]
-    ruta_foto = next((RAIZ / "sesiones" / c["foto"].split("sesiones/", 1)[1] for c in cambios
-                      if c["a"] == "ROJO" and c.get("foto")), None)
     filas = [
         ["Medida", "Resultado"],
         ["Tiempo por color", f"VERDE {coma(pe['VERDE'])} % · AMARILLO {coma(pe['AMARILLO'])} % · ROJO {coma(pe['ROJO'])} %"],
@@ -566,9 +564,6 @@ def seccion_prueba(h: list, conf: dict, p: Pendientes) -> None:
         "1,6–1,7 % con él.",
     ):
         h += [Paragraph(texto, VINETA, bulletText="•")]
-    if ruta_foto and ruta_foto.exists():
-        h += [KeepTogether([figura(ruta_foto, 6.6), Paragraph(
-            "Figura 6. Foto tomada por el sistema al pasar a ROJO, con el nivel y la causa registrados.", PIE)])]
 
 
 def seccion_referencias(h: list) -> None:
